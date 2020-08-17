@@ -44,6 +44,7 @@ class AutoloadModule:
                     raise TypeError('The contents of the excludes must all be strings')
                 if exclude.endswith('.py'):
                     fix_excludes.append(exclude.replace('.py', ''))
+                fix_excludes.append(exclude)
             files = [file for file in files for exclude in fix_excludes if file != exclude]
         classes = []
         for file in files:
