@@ -9,11 +9,7 @@ class AutoloadModule:
     sp = sys.path
 
     def __init__(self, base_path=None):
-        self.__base_path = base_path
-        if not base_path:
-            self.__base_path = self.op.dirname(inspect.stack()[1].filename)
-        if self.__base_path.endswith('/'):
-            self.__base_path = self.__base_path[:-1]
+        self.__base_path = self.__init_base_url(base_path)
 
     def load_class(self, file_name):
         target_file = file_name
@@ -34,7 +30,8 @@ class AutoloadModule:
             raise Exception('Not Found The Directory : {}'.format(target_dir))
         if target_dir not in self.sp:
             self.sp.append(target_dir)
-        files = [self.op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py') and file != '__init__.py']
+        files = [self.op.splitext(file)[0] for file in os.listdir(target_dir)
+                 if file.endswith('.py') and file != '__init__.py' and file != __file__]
         if excludes:
             if not iter(excludes):
                 raise TypeError('excludes variable must be iterable.')
@@ -59,6 +56,13 @@ class AutoloadModule:
             return tuple(sorted(has_order_classes))
         ordered_classes = sorted(has_order_classes) + no_has_order_classes
         return tuple(ordered_classes)
+
+    def __init_base_url(self, base_path=None):
+        if not base_path:
+            return self.op.dirname(inspect.stack()[1].filename)
+        if self.__base_path.endswith('/'):
+            return self.__base_path[:-1]
+        return base_path
 
     def __path_fix(self, name):
         if name.startswith('/'):
