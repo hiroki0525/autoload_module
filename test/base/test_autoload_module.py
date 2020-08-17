@@ -1,9 +1,9 @@
 import unittest
 
 from src.autoload_module import AutoloadModule
-from test.packageA.test_a import TestA
-from test.packageA.test_b import TestB
-from test.packageA.test_c import TestC
+from test.packageA.test_a1 import TestA
+from test.packageA.test_a2 import TestB
+from test.packageA.test_a3 import TestC
 
 
 class TestAutoLoadModule(unittest.TestCase):
