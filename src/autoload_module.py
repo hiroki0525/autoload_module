@@ -24,8 +24,8 @@ class AutoloadModule:
         for obj in inspect.getmembers(module, inspect.isclass):
             return obj[1]
 
-    def load_classes(self, pkg_name, excludes=None):
-        target_dir = self.__path_fix(pkg_name)
+    def load_classes(self, pkg_name=None, excludes=None):
+        target_dir = self.__path_fix(pkg_name) if pkg_name else self.__base_path
         if not self.op.isdir(target_dir):
             raise Exception('Not Found The Directory : {}'.format(target_dir))
         if target_dir not in self.sp:
