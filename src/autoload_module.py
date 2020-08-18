@@ -25,7 +25,7 @@ class AutoloadModule:
             return obj[1]
 
     def load_classes(self, pkg_name=None, excludes=None):
-        target_dir = self.__path_fix(pkg_name) if pkg_name else self.__base_path
+        target_dir = self.__path_fix(pkg_name)
         if not self.op.isdir(target_dir):
             raise Exception('Not Found The Directory : {}'.format(target_dir))
         if target_dir not in self.sp:
@@ -65,6 +65,8 @@ class AutoloadModule:
         return base_path
 
     def __path_fix(self, name):
+        if not name or name == '.' or name == '/' or name == './':
+            return self.__base_path
         if name.startswith('/'):
             result_path = self.__base_path + name
             # example: /foo/bar/
