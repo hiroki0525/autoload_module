@@ -31,7 +31,7 @@ class AutoloadModule:
         if target_dir not in self.sp:
             self.sp.append(target_dir)
         files = [self.op.splitext(file)[0] for file in os.listdir(target_dir)
-                 if file.endswith('.py') and file != '__init__.py' and file != __file__]
+                 if file.endswith('.py') and file != '__init__.py' and file != inspect.stack()[1].filename]
         if excludes:
             if not iter(excludes):
                 raise TypeError('excludes variable must be iterable.')
