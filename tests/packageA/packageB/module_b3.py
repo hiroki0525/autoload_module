@@ -1,4 +1,4 @@
-class Test1:
+class ModuleB3:
     def __init__(self):
         print(f'{self.__class__.__name__} init!')
 
