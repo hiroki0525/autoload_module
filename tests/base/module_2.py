@@ -1,4 +1,7 @@
-class Module2:
+from tests.test_module import TestModule
+
+
+class Module2(TestModule):
     def __init__(self):
         print(f'{self.__class__.__name__} init!')
 
