@@ -74,7 +74,7 @@ class ModuleAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                [self.assertEqual(loader.load_classes(pkg_name, exclude), expected) for loader in self.loaders]
+                [self.assertTupleEqual(loader.load_classes(pkg_name, exclude), expected) for loader in self.loaders]
 
 
 if __name__ == '__main__':
