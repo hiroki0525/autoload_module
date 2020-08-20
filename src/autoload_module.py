@@ -7,6 +7,11 @@ import sys
 class AutoloadModule:
     op = os.path
     sp = sys.path
+    this_file = op.basename(__file__)
+    default_excludes = (
+        '__init__.py',
+        this_file,
+    )
 
     def __init__(self, base_path=None):
         self.__base_path = self.__init_base_url(base_path)
@@ -30,24 +35,26 @@ class AutoloadModule:
             raise Exception('Not Found The Directory : {}'.format(target_dir))
         if target_dir not in self.sp:
             self.sp.append(target_dir)
-        files = [self.op.splitext(file)[0] for file in os.listdir(target_dir)
-                 if file.endswith('.py') and file != '__init__.py' and file != inspect.stack()[1].filename]
+        files = [self.op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
+        exclude_files = list(self.default_excludes)
+        exclude_files.append(self.op.basename(self.__detect_call_path()))
         if excludes:
             if not iter(excludes):
                 raise TypeError('excludes variable must be iterable.')
-            fix_excludes = []
             for exclude in excludes:
                 if not isinstance(exclude, str):
                     raise TypeError('The contents of the excludes must all be strings')
-                if exclude.endswith('.py'):
-                    fix_excludes.append(exclude.replace('.py', ''))
-                fix_excludes.append(exclude)
-            files = [file for file in files for exclude in fix_excludes if file != exclude]
+                exclude_files.append(exclude)
+        fix_excludes = [exclude.replace('.py', '') for exclude in exclude_files]
+        excluded_files = tuple(set(files) - set(fix_excludes))
         classes = []
-        for file in files:
+        for file in excluded_files:
             module = importlib.import_module(file)
-            for obj in inspect.getmembers(module, inspect.isclass):
-                classes.append(obj[1])
+            for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
+                target_name = clazz.load_filename if hasattr(clazz, "load_filename") else file
+                if "".join(target_name.split("_")).lower() != mod_name.lower():
+                    continue
+                classes.append(clazz)
         has_order_classes = [clazz for clazz in classes if hasattr(clazz, 'load_order') and clazz.load_order]
         if not has_order_classes:
             return tuple(classes)
@@ -57,9 +64,17 @@ class AutoloadModule:
         ordered_classes = sorted(has_order_classes) + no_has_order_classes
         return tuple(ordered_classes)
 
+    def __detect_call_path(self):
+        for path in inspect.stack():
+            path_name = path.filename
+            filename = self.op.basename(path.filename)
+            if self.this_file == filename:
+                continue
+            return path_name
+
     def __init_base_url(self, base_path=None):
         if not base_path:
-            return self.op.dirname(inspect.stack()[1].filename)
+            return self.op.dirname(self.__detect_call_path())
         if self.__base_path.endswith('/'):
             return self.__base_path[:-1]
         return base_path
