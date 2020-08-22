@@ -1,5 +1,9 @@
+import math
+
 from tests.test_module import TestModule
 
 
 class Module1(TestModule):
-    pass
+
+    def add(self, x):
+        return math.acos(x)

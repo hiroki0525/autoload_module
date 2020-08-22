@@ -60,8 +60,8 @@ class AutoloadModule:
             return tuple(classes)
         no_has_order_classes = [clazz for clazz in classes if not hasattr(clazz, 'load_order') or not clazz.load_order]
         if not no_has_order_classes:
-            return tuple(sorted(has_order_classes))
-        ordered_classes = sorted(has_order_classes) + no_has_order_classes
+            return tuple(sorted(has_order_classes, key=lambda clazz:clazz.load_order))
+        ordered_classes = sorted(has_order_classes, key=lambda clazz:clazz.load_order) + no_has_order_classes
         return tuple(ordered_classes)
 
     def __detect_call_path(self):
