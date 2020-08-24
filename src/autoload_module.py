@@ -26,8 +26,11 @@ class AutoloadModule:
         if target_path not in self.sp:
             self.sp.append(target_path)
         module = importlib.import_module(target_file)
-        for obj in inspect.getmembers(module, inspect.isclass):
-            return obj[1]
+        for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
+            target_name = clazz.load_module_name if hasattr(clazz, "load_module_name") else target_file
+            if "".join(target_name.split("_")).lower() != mod_name.lower():
+                continue
+            return clazz
 
     def load_classes(self, pkg_name=None, excludes=None):
         target_dir = self.__path_fix(pkg_name)
