@@ -51,7 +51,7 @@ class AutoloadModule:
         for file in excluded_files:
             module = importlib.import_module(file)
             for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
-                target_name = clazz.load_filename if hasattr(clazz, "load_filename") else file
+                target_name = clazz.load_module_name if hasattr(clazz, "load_module_name") else file
                 if "".join(target_name.split("_")).lower() != mod_name.lower():
                     continue
                 classes.append(clazz)
