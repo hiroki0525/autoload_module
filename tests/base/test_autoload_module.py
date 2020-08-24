@@ -62,7 +62,6 @@ class TestAutoLoadModule(unittest.TestCase):
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
 
-
     def test_load_classes_complex_path_load(self):
         pkgB_result = {ModuleB3(), ModuleB2(), ModuleB1()}
         test_cases = (
@@ -90,7 +89,6 @@ class TestAutoLoadModule(unittest.TestCase):
                 if not instances[0] == expected[0]:
                     self.fail()
                 self.assertSetEqual(set(instances[1:]), set(expected[1:]))
-
 
     def test_load_classes_no_order(self):
         # Module1 has other python package.
@@ -125,6 +123,15 @@ class TestAutoLoadModule(unittest.TestCase):
                 instances = tuple([clazz() for clazz in classes])
                 self.assertTupleEqual(instances, expected)
 
+    def test_load_classes_raise_error(self):
+        test_cases = (
+            ("./nonepackage", None),
+            (".", 123),
+            (".", [1, 2, 3]),
+        )
+        for pkg_name, exclude in test_cases:
+            with self.assertRaises(Exception):
+                self.loader.load_classes(pkg_name, exclude)
 
 if __name__ == '__main__':
     unittest.main()
