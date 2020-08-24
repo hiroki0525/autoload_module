@@ -32,7 +32,7 @@ class AutoloadModule:
     def load_classes(self, pkg_name=None, excludes=None):
         target_dir = self.__path_fix(pkg_name)
         if not self.op.isdir(target_dir):
-            raise Exception('Not Found The Directory : {}'.format(target_dir))
+            raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
         if target_dir not in self.sp:
             self.sp.append(target_dir)
         files = [self.op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
