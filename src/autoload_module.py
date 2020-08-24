@@ -27,8 +27,9 @@ class AutoloadModule:
             self.sp.append(target_path)
         module = importlib.import_module(target_file)
         for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
-            target_name = clazz.load_module_name if hasattr(clazz, "load_module_name") else target_file
-            if "".join(target_name.split("_")).lower() != mod_name.lower():
+            if hasattr(clazz, "load_flg") and clazz.load_flg:
+                return clazz
+            if "".join(target_file.split("_")).lower() != mod_name.lower():
                 continue
             return clazz
 
@@ -54,8 +55,10 @@ class AutoloadModule:
         for file in excluded_files:
             module = importlib.import_module(file)
             for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
-                target_name = clazz.load_module_name if hasattr(clazz, "load_module_name") else file
-                if "".join(target_name.split("_")).lower() != mod_name.lower():
+                if hasattr(clazz, "load_flg") and clazz.load_flg:
+                    classes.append(clazz)
+                    break
+                if "".join(file.split("_")).lower() != mod_name.lower():
                     continue
                 classes.append(clazz)
         has_order_classes = [clazz for clazz in classes if hasattr(clazz, 'load_order') and clazz.load_order]
@@ -101,8 +104,8 @@ class AutoloadModule:
                         return result_path
                     # example: ./foo
                     return result_path + '/'
-                # example: .foo
-                return self.__base_path + '/' + name[1:] + '/'
+                # example: .foo.bar
+                return self.__base_path + '/'.join(name.split('.')) + '/'
             level = 0
             path = None
             for i in range(len(name)):

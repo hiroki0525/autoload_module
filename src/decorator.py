@@ -1,8 +1,7 @@
-def load_config(order=None, module_name=None):
+def load_config(order=None, load=False):
     def decorator(cls):
         if order:
             cls.load_order = order
-        if module_name:
-            cls.load_module_name = module_name
+        cls.load_flg = load
         return cls
     return decorator

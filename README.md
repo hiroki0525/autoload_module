@@ -132,10 +132,10 @@ validator_classes = loader.load_classes("project")
 **NOTE**
 - To search class, **You must match the file name and class name.**
 For example, if you named the file `test_module.py`, you must named the class `TestModule`.
-When you want to custimize the class name, use `@load_config` decorator as below.
+When you want to customize the class name, use `@load_config` decorator and write `load=True` manually.
     - validator_a.py
     ```python
-    @load_config(module_name="validator_a")
+    @load_config(load=True)
     class CustomValidator:
         def validate(self):
             print("validateA!!")

@@ -1,5 +1,6 @@
+from src.decorator import load_config
 from tests.test_module import TestModule
 
-
-class ModuleB1(TestModule):
+@load_config(load=True)
+class CustomModuleB1(TestModule):
     pass
