@@ -11,7 +11,7 @@ setup(
     license="MIT License",
     version='0.1.2',
     url='https://github.com/hiroki0525/autoload_module',
-    author='hiroki0525',
+    author='Hiroki Miyaji',
     author_email='nukoprogramming@gmail.com',
     packages=find_packages(exclude=['test']),
 )
