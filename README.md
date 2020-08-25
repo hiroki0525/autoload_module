@@ -17,8 +17,11 @@ from autoload.module_loader import ModuleLoader
 
 input = "foo bar baz"
 loader = ModuleLoader()
+
+# Automatically import modules and return class objects
 validator_classes = loader.load_classes("validator")
 try:
+    # initialize and execute method
     [clazz().validate(input) for clazz in validator_classes]
 except:
     print("input is invalid!!")
