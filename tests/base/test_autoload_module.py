@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
-sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+sys.path.append(str(Path(__file__).parent.parent.parent / "autoload"))
 
 from autoload.module_loader import ModuleLoader
 from tests.base.module_1 import Module1

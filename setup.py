@@ -32,5 +32,5 @@ setup(
     url='https://github.com/hiroki0525/autoload_module',
     author='Hiroki Miyaji',
     author_email='nukoprogramming@gmail.com',
-    py_modules = ['src.autoload_module', 'src.decorator']
+    py_modules = ['autoload.module_loader', 'autoload.decorator']
 )
