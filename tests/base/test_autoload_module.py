@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 
-from src.autoload_module import AutoloadModule
+from autoload.module_loader import ModuleLoader
 from tests.base.module_1 import Module1
 from tests.base.module_2 import Module2
 from tests.base.module_3 import Module3
@@ -24,7 +24,7 @@ class TestAutoLoadModule(unittest.TestCase):
 
     def setUp(self):
         print('setup')
-        self.loader = AutoloadModule()
+        self.loader = ModuleLoader()
 
     def test_load_class(self):
         module_1 = Module1()
@@ -32,14 +32,14 @@ class TestAutoLoadModule(unittest.TestCase):
         module_b1 = CustomModuleB1()
         module_c1 = ModuleC1()
         test_cases = (
-            # ("module_1", module_1),
-            # ("/module_1.py", module_1),
-            # ("./module_1", module_1),
-            # ("..packageA.module_a1", module_a1),
-            # ("../packageA/module_a1", module_a1),
-            # ("..packageA.packageB.module_b1", module_b1),
-            # ("../packageA/packageB/module_b1", module_b1),
-            # ("/packageC/module_c1", module_c1),
+            ("module_1", module_1),
+            ("/module_1.py", module_1),
+            ("./module_1", module_1),
+            ("..packageA.module_a1", module_a1),
+            ("../packageA/module_a1", module_a1),
+            ("..packageA.packageB.module_b1", module_b1),
+            ("../packageA/packageB/module_b1", module_b1),
+            ("/packageC/module_c1", module_c1),
             ("./packageC/module_c1", module_c1),
             (".packageC.module_c1", module_c1),
         )

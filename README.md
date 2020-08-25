@@ -13,10 +13,10 @@ project/
 ```
 - example.py
 ```python
-from src.autoload_module import AutoloadModule
+from autoload.module_loader import ModuleLoader
 
 input = "foo bar baz"
-loader = AutoloadModule()
+loader = ModuleLoader()
 validator_classes = loader.load_classes("validator")
 try:
     [clazz().validate(input) for clazz in validator_classes]
@@ -30,9 +30,9 @@ pip install autoload_module
 ## Usage
 ### Constructor
 ```
-AutoloadModule([base_path])
+ModuleLoader([base_path])
 ```
-The AutoloadModule can be generated with no parameters.
+The ModuleLoader can be generated with no parameters.
 In that case, the instance has the absolute path where
 it was initialized.  
 - Directory
@@ -46,17 +46,17 @@ it was initialized.
 ```
 - example.py
 ```python
-from src.autoload_module import AutoloadModule
+from autoload.module_loader import ModuleLoader
 
 # The instance has '/usr/local/src/project/'
-loader = AutoloadModule()
+loader = ModuleLoader()
 
 # load modules in the directory; '/usr/local/src/project/validator/'
 validator_classes = loader.load_classes("validator")
 ```
-If you want to change the base path, you must generate the AutoloadModule with an absolute path parameter.
+If you want to change the base path, you must generate the ModuleLoader with an absolute path parameter.
 ```python
-loader = AutoloadModule('/user/local/src/custom')
+loader = ModuleLoader('/user/local/src/custom')
 ```
 ### Methods
 #### load_class
@@ -78,7 +78,7 @@ class Validator:
 ```
 - example.py
 ```python
-loader = AutoloadModule()
+loader = ModuleLoader()
 clazz = loader.load_class("validator")
 clazz().validate()
 # -> validate!!
@@ -117,7 +117,7 @@ class ValidatorA:
 ```
 - example.py
 ```python
-loader = AutoloadModule()
+loader = ModuleLoader()
 
 # Automatically read modules without '__init__.py', not py file, and this file.
 # return the tuple of ValidateA, ValidatorB, and ValidatorC class objects

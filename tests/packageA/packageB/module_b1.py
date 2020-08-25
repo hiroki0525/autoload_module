@@ -1,4 +1,4 @@
-from src.decorator import load_config
+from autoload.decorator import load_config
 from tests.test_module import TestModule
 
 @load_config(load=True)

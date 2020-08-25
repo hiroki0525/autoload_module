@@ -4,7 +4,7 @@ import os
 import sys
 
 
-class AutoloadModule:
+class ModuleLoader:
     op = os.path
     sp = sys.path
     this_file = op.basename(__file__)
