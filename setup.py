@@ -28,7 +28,7 @@ setup(
     ),
     long_description_content_type="text/markdown",
     license="MIT License",
-    version='1.0.0',
+    version='1.0.1',
     url='https://github.com/hiroki0525/autoload_module',
     author='Hiroki Miyaji',
     author_email='nukoprogramming@gmail.com',
