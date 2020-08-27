@@ -106,6 +106,17 @@ validator_classes = loader.load_classes("project", ["validator_a", "validator_b"
 [clazz().validate() for clazz in validator_classes]
 # -> validateC!!
 ```
+You can specify `pkg_name` as below.
+```python
+loader.load_classes("validator.py")
+loader.load_classes(".validator")
+loader.load_classes("/validator")
+loader.load_classes("./validator")
+
+# relative path
+loader.load_classes("..packageA.validator")
+loader.load_classes("../packageA/validator")
+```
 
 **NOTE**
 - To search class, **You must match the file name and class name.**
@@ -151,16 +162,7 @@ clazz = loader.load_class("validator")
 clazz().validate()
 # -> validate!!
 ```
-You can specify `file_name` as below.
-```python
-loader.load_class("validator.py")
-loader.load_class(".validator")
-loader.load_class("/validator")
-loader.load_class("./validator")
+How to specify `file_name` is the same as that of `load_classes`.
 
-# relative path
-loader.load_class("..packageA.validator")
-loader.load_class("../packageA/validator")
-```
 ## License
 Released under the MIT license.
