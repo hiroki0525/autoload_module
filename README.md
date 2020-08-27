@@ -62,41 +62,6 @@ If you want to change the base path, you must generate the ModuleLoader with an 
 loader = ModuleLoader('/user/local/src/custom')
 ```
 ### Methods
-#### load_class
-```
-load_class(file_name)
-```
-This method read the Python file and return the class object.
-- Directory
-```
-project/
-  ├ example.py
-  └ validator.py
-```
-- validator.py
-```python
-class Validator:
-    def validate(self):
-        print("validate!!")
-```
-- example.py
-```python
-loader = ModuleLoader()
-clazz = loader.load_class("validator")
-clazz().validate()
-# -> validate!!
-```
-You can specify `file_name` as below.
-```python
-loader.load_class("validator.py")
-loader.load_class(".validator")
-loader.load_class("/validator")
-loader.load_class("./validator")
-
-# relative path
-loader.load_class("..packageA.validator")
-loader.load_class("../packageA/validator")
-```
 #### load_classes
 ```
 load_classes(pkg_name, [excludes])
@@ -132,6 +97,16 @@ validator_classes = loader.load_classes("project")
 # -> validateB!!
 # -> validateC!!
 ```
+You can also load only specific modules using `excludes` variable as below.
+```python
+# 'excludes' is a iterable object like tuple, list.
+# You must specify module names in 'excludes'.
+validator_classes = loader.load_classes("project", ["validator_a", "validator_b"])
+
+[clazz().validate() for clazz in validator_classes]
+# -> validateC!!
+```
+
 **NOTE**
 - To search class, **You must match the file name and class name.**
 For example, if you named the file `test_module.py`, you must named the class `TestModule`.
@@ -152,6 +127,40 @@ When you want to customize the class name, use `@load_config` decorator and writ
         def validate(self):
             print("validateA!!")
     ```
+#### load_class
+```
+load_class(file_name)
+```
+This method read the Python file and return the class object.
+- Directory
+```
+project/
+  ├ example.py
+  └ validator.py
+```
+- validator.py
+```python
+class Validator:
+    def validate(self):
+        print("validate!!")
+```
+- example.py
+```python
+loader = ModuleLoader()
+clazz = loader.load_class("validator")
+clazz().validate()
+# -> validate!!
+```
+You can specify `file_name` as below.
+```python
+loader.load_class("validator.py")
+loader.load_class(".validator")
+loader.load_class("/validator")
+loader.load_class("./validator")
 
+# relative path
+loader.load_class("..packageA.validator")
+loader.load_class("../packageA/validator")
+```
 ## License
 Released under the MIT license.
