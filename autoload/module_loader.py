@@ -3,16 +3,16 @@ import inspect
 import os
 import sys
 
+op = os.path
+sp = sys.path
+this_file = op.basename(__file__)
+default_excludes = (
+    '__init__.py',
+    this_file,
+)
+
 
 class ModuleLoader:
-    op = os.path
-    sp = sys.path
-    this_file = op.basename(__file__)
-    default_excludes = (
-        '__init__.py',
-        this_file,
-    )
-
     def __init__(self, base_path=None):
         self.__base_path = self.__init_base_url(base_path)
 
@@ -23,8 +23,8 @@ class ModuleLoader:
         fix_path_arr = self.__path_fix(target_file).split('/')
         target_file = fix_path_arr[-2]
         target_path = '/'.join(fix_path_arr[:-2])
-        if target_path not in self.sp:
-            self.sp.append(target_path)
+        if target_path not in sp:
+            sp.append(target_path)
         module = importlib.import_module(target_file)
         for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
             if hasattr(clazz, "load_flg") and clazz.load_flg:
@@ -35,13 +35,13 @@ class ModuleLoader:
 
     def load_classes(self, pkg_name=None, excludes=None):
         target_dir = self.__path_fix(pkg_name)
-        if not self.op.isdir(target_dir):
+        if not op.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
-        if target_dir not in self.sp:
-            self.sp.append(target_dir)
-        files = [self.op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
+        if target_dir not in sp:
+            sp.append(target_dir)
+        files = [op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
         exclude_files = list(self.default_excludes)
-        exclude_files.append(self.op.basename(self.__detect_call_path()))
+        exclude_files.append(op.basename(self.__detect_call_path()))
         if excludes:
             if not iter(excludes):
                 raise TypeError('excludes variable must be iterable.')
@@ -66,21 +66,21 @@ class ModuleLoader:
             return tuple(classes)
         no_has_order_classes = [clazz for clazz in classes if not hasattr(clazz, 'load_order') or not clazz.load_order]
         if not no_has_order_classes:
-            return tuple(sorted(has_order_classes, key=lambda clazz:clazz.load_order))
-        ordered_classes = sorted(has_order_classes, key=lambda clazz:clazz.load_order) + no_has_order_classes
+            return tuple(sorted(has_order_classes, key=lambda clazz: clazz.load_order))
+        ordered_classes = sorted(has_order_classes, key=lambda clazz: clazz.load_order) + no_has_order_classes
         return tuple(ordered_classes)
 
     def __detect_call_path(self):
         for path in inspect.stack():
             path_name = path.filename
-            filename = self.op.basename(path.filename)
-            if self.this_file == filename:
+            filename = op.basename(path.filename)
+            if this_file == filename:
                 continue
             return path_name
 
     def __init_base_url(self, base_path=None):
         if not base_path:
-            return self.op.dirname(self.__detect_call_path())
+            return op.dirname(self.__detect_call_path())
         if self.__base_path.endswith('/'):
             return self.__base_path[:-1]
         return base_path
