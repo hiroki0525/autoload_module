@@ -1,7 +1,7 @@
 from autoload.decorator import load_config
-from tests.test_module import TestModule
+from tests.clazz.test_module import TestModule
 
 
 @load_config(order=1)
-class ModuleA2(TestModule):
+class ModuleC3(TestModule):
     pass

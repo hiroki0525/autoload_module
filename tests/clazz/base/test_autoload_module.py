@@ -2,22 +2,22 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
-sys.path.append(str(Path(__file__).parent.parent.parent / "autoload"))
+sys.path.append(str(Path(__file__).parent.parent.parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
 from autoload.module_loader import ModuleLoader
-from tests.base.module_1 import Module1
-from tests.base.module_2 import Module2
-from tests.base.module_3 import Module3
-from tests.base.packageC.module_c1 import ModuleC1
-from tests.base.packageC.module_c2 import ModuleC2
-from tests.base.packageC.module_c3 import ModuleC3
-from tests.packageA.module_a1 import ModuleA1
-from tests.packageA.module_a2 import ModuleA2
-from tests.packageA.module_a3 import ModuleA3
-from tests.packageA.packageB.module_b1 import CustomModuleB1
-from tests.packageA.packageB.module_b2 import ModuleB2
-from tests.packageA.packageB.module_b3 import ModuleB3
+from tests.clazz.base.module_1 import Module1
+from tests.clazz.base.module_2 import Module2
+from tests.clazz.base.module_3 import Module3
+from tests.clazz.base.packageC.module_c1 import ModuleC1
+from tests.clazz.base.packageC.module_c2 import ModuleC2
+from tests.clazz.base.packageC.module_c3 import ModuleC3
+from tests.clazz.packageA.module_a1 import ModuleA1
+from tests.clazz.packageA.module_a2 import ModuleA2
+from tests.clazz.packageA.module_a3 import ModuleA3
+from tests.clazz.packageA.packageB.module_b1 import CustomModuleB1
+from tests.clazz.packageA.packageB.module_b2 import ModuleB2
+from tests.clazz.packageA.packageB.module_b3 import ModuleB3
 
 
 class TestAutoLoadModule(unittest.TestCase):

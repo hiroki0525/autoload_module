@@ -1,6 +1,6 @@
 import math
 
-from tests.test_module import TestModule
+from tests.clazz.test_module import TestModule
 
 
 class Module1(TestModule):
