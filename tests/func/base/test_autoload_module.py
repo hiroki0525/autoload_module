@@ -6,18 +6,18 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
 from autoload.module_loader import ModuleLoader
-from tests.func.base.module_1 import Module1
-from tests.func.base.module_2 import Module2
-from tests.func.base.module_3 import Module3
-from tests.func.base.packageC.module_c1 import ModuleC1
-from tests.func.base.packageC.module_c2 import ModuleC2
-from tests.func.base.packageC.module_c3 import ModuleC3
-from tests.func.packageA.module_a1 import ModuleA1
-from tests.func.packageA.module_a2 import ModuleA2
-from tests.func.packageA.module_a3 import ModuleA3
-from tests.func.packageA.packageB.module_b1 import CustomModuleB1
-from tests.func.packageA.packageB.module_b2 import ModuleB2
-from tests.func.packageA.packageB.module_b3 import ModuleB3
+from tests.func.base.func_1 import Module1
+from tests.func.base.func_2 import Module2
+from tests.func.base.func_3 import Module3
+from tests.func.base.packageC.packageC_func1 import ModuleC1
+from tests.func.base.packageC.packageC_func2 import ModuleC2
+from tests.func.base.packageC.packageC_func3 import ModuleC3
+from tests.func.packageA.packageA_func1 import ModuleA1
+from tests.func.packageA.packageA_func3 import ModuleA2
+from tests.func.packageA.packageA_func2 import ModuleA3
+from tests.func.packageA.packageB.packageB_func1 import CustomModuleB1
+from tests.func.packageA.packageB.packageB_func2 import ModuleB2
+from tests.func.packageA.packageB.packageB_func3 import ModuleB3
 
 
 class TestAutoLoadModule(unittest.TestCase):
