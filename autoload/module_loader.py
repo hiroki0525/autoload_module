@@ -21,27 +21,18 @@ class ModuleLoader:
     def __init__(self, base_path=None):
         self.__base_path = self.__init_base_url(base_path)
 
+    def load_function(self, file_name):
+        return self.__load_resource(file_name, 'function')
+
     def load_class(self, file_name):
-        target_file = file_name.replace('.py', '') if file_name.endswith('.py') else file_name
-        fix_path_arr = self.__path_fix(target_file).split('/')
-        target_file = fix_path_arr[-2]
-        target_path = '/'.join(fix_path_arr[:-2])
-        if target_path not in SP:
-             SP.append(target_path)
-        module = importlib.import_module(target_file)
-        for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
-            if hasattr(clazz, DECORATOR_ATTR) and clazz.load_flg:
-                return clazz
-            if "".join(target_file.split("_")).lower() != mod_name.lower():
-                continue
-            return clazz
+        return self.__load_resource(file_name, 'class')
 
     def load_classes(self, pkg_name=None, excludes=None):
         target_dir = self.__path_fix(pkg_name)
         if not OP.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
         if target_dir not in SP:
-             SP.append(target_dir)
+            SP.append(target_dir)
         files = [OP.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
         exclude_files = list(DEFAULT_EXCLUDES)
         exclude_files.append(OP.basename(self.__detect_call_path()))
@@ -132,3 +123,20 @@ class ModuleLoader:
         # example: foo.bar
         path = '/'.join(name.split('.'))
         return self.__base_path + '/' + path + '/'
+
+    def __load_resource(self, file_name, type):
+        target_file = file_name.replace('.py', '') if file_name.endswith('.py') else file_name
+        fix_path_arr = self.__path_fix(target_file).split('/')
+        target_file = fix_path_arr[-2]
+        target_path = '/'.join(fix_path_arr[:-2])
+        if target_path not in SP:
+            SP.append(target_path)
+        module = importlib.import_module(target_file)
+        # Don't use enum because it is not supported under Python 3.4 version
+        predicate = inspect.isclass if type == 'class' else inspect.isfunction
+        for mod_name, resource in inspect.getmembers(module, predicate):
+            if hasattr(resource, DECORATOR_ATTR) and resource.load_flg:
+                return resource
+            if "".join(target_file.split("_")).lower() != mod_name.lower():
+                continue
+            return resource
