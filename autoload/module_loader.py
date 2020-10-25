@@ -3,12 +3,16 @@ import inspect
 import os
 import sys
 
-op = os.path
-sp = sys.path
-this_file = op.basename(__file__)
-default_excludes = (
+__all__ = (
+    "ModuleLoader"
+)
+
+OP = os.path
+SP = sys.path
+THIS_FILE = OP.basename(__file__)
+DEFAULT_EXCLUDES = (
     '__init__.py',
-    this_file,
+    THIS_FILE,
 )
 
 
@@ -17,14 +21,12 @@ class ModuleLoader:
         self.__base_path = self.__init_base_url(base_path)
 
     def load_class(self, file_name):
-        target_file = file_name
-        if file_name.endswith('.py'):
-            target_file = file_name.replace('.py', '')
+        target_file = file_name.replace('.py', '') if file_name.endswith('.py') else file_name
         fix_path_arr = self.__path_fix(target_file).split('/')
         target_file = fix_path_arr[-2]
         target_path = '/'.join(fix_path_arr[:-2])
-        if target_path not in sp:
-            sp.append(target_path)
+        if target_path not in  SP:
+             SP.append(target_path)
         module = importlib.import_module(target_file)
         for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
             if hasattr(clazz, "load_flg") and clazz.load_flg:
@@ -35,13 +37,13 @@ class ModuleLoader:
 
     def load_classes(self, pkg_name=None, excludes=None):
         target_dir = self.__path_fix(pkg_name)
-        if not op.isdir(target_dir):
+        if not OP.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
-        if target_dir not in sp:
-            sp.append(target_dir)
-        files = [op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
-        exclude_files = list(default_excludes)
-        exclude_files.append(op.basename(self.__detect_call_path()))
+        if target_dir not in  SP:
+             SP.append(target_dir)
+        files = [OP.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
+        exclude_files = list(DEFAULT_EXCLUDES)
+        exclude_files.append(OP.basename(self.__detect_call_path()))
         if excludes:
             if not iter(excludes):
                 raise TypeError('excludes variable must be iterable.')
@@ -73,14 +75,14 @@ class ModuleLoader:
     def __detect_call_path(self):
         for path in inspect.stack():
             path_name = path.filename
-            filename = op.basename(path.filename)
-            if this_file == filename:
+            filename = OP.basename(path.filename)
+            if THIS_FILE == filename:
                 continue
             return path_name
 
     def __init_base_url(self, base_path=None):
         if not base_path:
-            return op.dirname(self.__detect_call_path())
+            return OP.dirname(self.__detect_call_path())
         if self.__base_path.endswith('/'):
             return self.__base_path[:-1]
         return base_path
