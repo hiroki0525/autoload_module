@@ -40,7 +40,7 @@ class ModuleLoader:
         if target_dir not in sp:
             sp.append(target_dir)
         files = [op.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
-        exclude_files = list(self.default_excludes)
+        exclude_files = list(default_excludes)
         exclude_files.append(op.basename(self.__detect_call_path()))
         if excludes:
             if not iter(excludes):
