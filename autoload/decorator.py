@@ -1,7 +1,7 @@
 def load_config(order=None, load=False):
-    def decorator(cls):
+    def decorator(resource):
         if order:
-            cls.load_order = order
-        cls.load_flg = load
-        return cls
+            resource.load_order = order
+        resource.load_flg = load
+        return resource
     return decorator
