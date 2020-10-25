@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "autoload_module"
+version = "1.1.0"
+description = "Python Autoload Module"
+authors = ["Hiroki Miyaji"]
+license = "MIT License"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
