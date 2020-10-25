@@ -6,18 +6,18 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
 from autoload.module_loader import ModuleLoader
-from tests.func.base.func_1 import Module1
-from tests.func.base.func_2 import Module2
-from tests.func.base.func_3 import Module3
-from tests.func.base.packageC.packageC_func1 import ModuleC1
-from tests.func.base.packageC.packageC_func2 import ModuleC2
-from tests.func.base.packageC.packageC_func3 import ModuleC3
-from tests.func.packageA.packageA_func1 import ModuleA1
-from tests.func.packageA.packageA_func3 import ModuleA2
-from tests.func.packageA.packageA_func2 import ModuleA3
-from tests.func.packageA.packageB.packageB_func1 import CustomModuleB1
-from tests.func.packageA.packageB.packageB_func2 import ModuleB2
-from tests.func.packageA.packageB.packageB_func3 import ModuleB3
+from tests.func.base.func_1 import func1
+from tests.func.base.func_2 import func2
+from tests.func.base.func_3 import func3
+from tests.func.base.packageC.packageC_func1 import packageC_func1
+from tests.func.base.packageC.packageC_func2 import packageC_func2
+from tests.func.base.packageC.packageC_func3 import packageC_func3
+from tests.func.packageA.packageA_func1 import packageA_func1
+from tests.func.packageA.packageA_func3 import packageA_func3
+from tests.func.packageA.packageA_func2 import packageA_func2
+from tests.func.packageA.packageB.packageB_func1 import packageB_func1
+from tests.func.packageA.packageB.packageB_func2 import packageB_func2
+from tests.func.packageA.packageB.packageB_func3 import packageB_func3
 
 
 class TestAutoLoadModule(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestAutoLoadModule(unittest.TestCase):
         print('setup')
         self.loader = ModuleLoader()
 
-    def test_load_class(self):
+    def test_load_function(self):
         module_1 = Module1()
         module_a1 = ModuleA1()
         module_b1 = CustomModuleB1()
@@ -45,9 +45,9 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for file_name, expected in test_cases:
             with self.subTest(file_name=file_name):
-                self.assertEqual(self.loader.load_class(file_name)(), expected)
+                self.assertEqual(self.loader.load_function(file_name)(), expected)
 
-    def test_load_classes_exclude(self):
+    def test_load_functions_exclude(self):
         basepkg_result = {Module3(), Module2(), Module1()}
         test_cases = (
             (".", None, basepkg_result),
@@ -58,11 +58,11 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                classes = self.loader.load_classes(pkg_name, exclude)
+                classes = self.loader.load_functions(pkg_name, exclude)
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
 
-    def test_load_classes_complex_path_load(self):
+    def test_load_functions_complex_path_load(self):
         pkgB_result = {ModuleB3(), ModuleB2(), CustomModuleB1()}
         test_cases = (
             ("../packageA/packageB", None, pkgB_result),
@@ -70,11 +70,11 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                classes = self.loader.load_classes(pkg_name, exclude)
+                classes = self.loader.load_functions(pkg_name, exclude)
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
 
-    def test_load_classes_partial_order(self):
+    def test_load_functions_partial_order(self):
         # Only ModuleA1 has order.
         pkgA_result = (ModuleA2(), ModuleA3(), ModuleA1())
         test_cases = (
@@ -84,13 +84,13 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                classes = self.loader.load_classes(pkg_name, exclude)
+                classes = self.loader.load_functions(pkg_name, exclude)
                 instances = [clazz() for clazz in classes]
                 if not instances[0] == expected[0]:
                     self.fail()
                 self.assertSetEqual(set(instances[1:]), set(expected[1:]))
 
-    def test_load_classes_no_order(self):
+    def test_load_functions_no_order(self):
         # Module1 has other python package.
         basepkg_result = {Module3(), Module2(), Module1()}
         test_cases = (
@@ -102,11 +102,11 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                classes = self.loader.load_classes(pkg_name, exclude)
+                classes = self.loader.load_functions(pkg_name, exclude)
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
 
-    def test_load_classes_order(self):
+    def test_load_functions_order(self):
         pkgC_result = (ModuleC3(), ModuleC2(), ModuleC1())
         test_cases = (
             ("packageC", None, pkgC_result),
@@ -119,11 +119,11 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                classes = self.loader.load_classes(pkg_name, exclude)
+                classes = self.loader.load_functions(pkg_name, exclude)
                 instances = tuple([clazz() for clazz in classes])
                 self.assertTupleEqual(instances, expected)
 
-    def test_load_classes_raise_error(self):
+    def test_load_functions_raise_error(self):
         test_cases = (
             ("./nonepackage", None),
             (".", 123),
@@ -131,7 +131,7 @@ class TestAutoLoadModule(unittest.TestCase):
         )
         for pkg_name, exclude in test_cases:
             with self.assertRaises(Exception):
-                self.loader.load_classes(pkg_name, exclude)
+                self.loader.load_functions(pkg_name, exclude)
 
 if __name__ == '__main__':
     unittest.main()
