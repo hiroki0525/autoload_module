@@ -14,6 +14,7 @@ DEFAULT_EXCLUDES = (
     '__init__.py',
     THIS_FILE,
 )
+DECORATOR_ATTR = "load_flg"
 
 
 class ModuleLoader:
@@ -25,11 +26,11 @@ class ModuleLoader:
         fix_path_arr = self.__path_fix(target_file).split('/')
         target_file = fix_path_arr[-2]
         target_path = '/'.join(fix_path_arr[:-2])
-        if target_path not in  SP:
+        if target_path not in SP:
              SP.append(target_path)
         module = importlib.import_module(target_file)
         for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
-            if hasattr(clazz, "load_flg") and clazz.load_flg:
+            if hasattr(clazz, DECORATOR_ATTR) and clazz.load_flg:
                 return clazz
             if "".join(target_file.split("_")).lower() != mod_name.lower():
                 continue
@@ -39,7 +40,7 @@ class ModuleLoader:
         target_dir = self.__path_fix(pkg_name)
         if not OP.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
-        if target_dir not in  SP:
+        if target_dir not in SP:
              SP.append(target_dir)
         files = [OP.splitext(file)[0] for file in os.listdir(target_dir) if file.endswith('.py')]
         exclude_files = list(DEFAULT_EXCLUDES)
@@ -57,7 +58,7 @@ class ModuleLoader:
         for file in excluded_files:
             module = importlib.import_module(file)
             for mod_name, clazz in inspect.getmembers(module, inspect.isclass):
-                if hasattr(clazz, "load_flg") and clazz.load_flg:
+                if hasattr(clazz, DECORATOR_ATTR) and clazz.load_flg:
                     classes.append(clazz)
                     break
                 if "".join(file.split("_")).lower() != mod_name.lower():
