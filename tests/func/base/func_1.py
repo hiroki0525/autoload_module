@@ -1,4 +1,4 @@
 from math import acos
 
 def func1():
-    pass
+    return 'func1'

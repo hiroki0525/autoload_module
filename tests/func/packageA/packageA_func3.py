@@ -1,2 +1,2 @@
 def packageA_func3():
-    pass
+    return 'packageA_func3'
