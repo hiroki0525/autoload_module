@@ -6,9 +6,9 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
 from autoload.module_loader import ModuleLoader
-from tests.func.base.func_1 import func1
-from tests.func.base.func_2 import func2
-from tests.func.base.func_3 import func3
+from tests.func.base.func1 import func1
+from tests.func.base.func2 import func2
+from tests.func.base.func3 import func3
 from tests.func.base.packageC.packageC_func1 import packageC_func1
 from tests.func.base.packageC.packageC_func2 import packageC_func2
 from tests.func.base.packageC.packageC_func3 import packageC_func3
