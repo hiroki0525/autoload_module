@@ -20,17 +20,22 @@ DECORATOR_ATTR = "load_flg"
 class ModuleLoader:
     def __init__(self, base_path=None):
         self.__base_path = self.__init_base_url(base_path)
-
-    def load_function(self, file_name):
-        return self.__load_resource(file_name, 'function')
+        self.__context = None
 
     def load_class(self, file_name):
+        self.__context = self.Context(self.Context.Type.clazz)
+        return self.__load_resource(file_name)
+
+    def load_function(self, file_name):
+        self.__context = self.Context(self.Context.Type.func)
         return self.__load_resource(file_name)
 
     def load_classes(self, pkg_name, excludes=None):
+        self.__context = self.Context(self.Context.Type.clazz)
         return self.__load_resources(pkg_name, excludes=excludes)
 
     def load_functions(self, pkg_name, excludes=None):
+        self.__context = self.Context(self.Context.Type.func)
         return self.__load_resources(pkg_name, excludes=excludes, type='function')
 
     def __detect_call_path(self):
@@ -93,7 +98,7 @@ class ModuleLoader:
         path = '/'.join(name.split('.'))
         return self.__base_path + '/' + path + '/'
 
-    def __load_resource(self, file_name, type='class'):
+    def __load_resource(self, file_name):
         target_file = file_name.replace('.py', '') if file_name.endswith('.py') else file_name
         fix_path_arr = self.__path_fix(target_file).split('/')
         target_file = fix_path_arr[-2]
@@ -101,13 +106,13 @@ class ModuleLoader:
         if target_path not in SP:
             SP.append(target_path)
         module = importlib.import_module(target_file)
-        # Don't use enum because it is not supported under Python 3.4 version
-        predicate = inspect.isclass if type == 'class' else inspect.isfunction
-        for mod_name, resource in inspect.getmembers(module, predicate):
+        comparison = self.__context.draw_comparison(target_file)
+        for mod_name, resource in inspect.getmembers(module, self.__context.predicate):
             if hasattr(resource, DECORATOR_ATTR) and resource.load_flg:
                 return resource
-            if "".join(target_file.split("_")).lower() != mod_name.lower():
+            if comparison != mod_name.lower():
                 continue
+            del self.__context
             return resource
 
     def __load_resources(self, pkg_name, excludes=None, type='class'):
@@ -129,17 +134,16 @@ class ModuleLoader:
         fix_excludes = [exclude.replace('.py', '') for exclude in exclude_files]
         excluded_files = tuple(set(files) - set(fix_excludes))
         classes = []
-        # Don't use enum because it is not supported under Python 3.4 version
-        predicate = inspect.isclass if type == 'class' else inspect.isfunction
         for file in excluded_files:
             module = importlib.import_module(file)
-            for mod_name, clazz in inspect.getmembers(module, predicate):
+            for mod_name, clazz in inspect.getmembers(module, self.__context.predicate):
                 if hasattr(clazz, DECORATOR_ATTR) and clazz.load_flg:
                     classes.append(clazz)
                     break
-                if "".join(file.split("_")).lower() != mod_name.lower():
+                if self.__context.draw_comparison(file) != mod_name.lower():
                     continue
                 classes.append(clazz)
+        del self.__context
         has_order_classes = [clazz for clazz in classes if hasattr(clazz, 'load_order') and clazz.load_order]
         if not has_order_classes:
             return tuple(classes)
@@ -148,3 +152,26 @@ class ModuleLoader:
             return tuple(sorted(has_order_classes, key=lambda clazz: clazz.load_order))
         ordered_classes = sorted(has_order_classes, key=lambda clazz: clazz.load_order) + no_has_order_classes
         return tuple(ordered_classes)
+
+    class Context:
+        # Don't use enum because it is not supported under Python 3.4 version
+        class Type:
+            func = 'function'
+            clazz = 'class'
+
+        def __init__(self, type):
+            self.__type = type
+            if type == self.Type.clazz:
+                self.__predicate = inspect.isclass
+            else:
+                self.__predicate = inspect.isfunction
+
+        @property
+        def predicate(self):
+            return self.__predicate
+
+        def draw_comparison(self, file):
+            if type == self.Type.clazz:
+                return "".join(file.split("_")).lower()
+            else:
+                return file.lower()

@@ -33,7 +33,7 @@ class TestAutoLoadModule(unittest.TestCase):
         result_C_1 = packageC_func1()
         # Importing path test runs on class base test.
         test_cases = (
-            ("func_1", result_1),
+            ("func1", result_1),
             ("..packageA.packageA_func1", result_A_1),
             ("../packageA/packageB/packageB_func1", result_B_1),
             ("/packageC/packageC_func1", result_C_1),
@@ -47,9 +47,9 @@ class TestAutoLoadModule(unittest.TestCase):
         test_cases = (
             (".", None, basepkg_result),
             (".", [], basepkg_result),
-            (".", ["func_3"], {func2(), func1()}),
-            (".", ["func_3", "func_2"], {func1()}),
-            (".", ("func_3", "func_2"), {func1()}),
+            (".", ["func3"], {func2(), func1()}),
+            (".", ["func3", "func2"], {func1()}),
+            (".", ("func3", "func2"), {func1()}),
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
@@ -87,7 +87,7 @@ class TestAutoLoadModule(unittest.TestCase):
         basepkg_result = {func3(), func2(), func1()}
         test_cases = (
             ("", None, basepkg_result),
-            ("./", ("func_3", "func_2"), {func1()}),
+            ("./", ("func3", "func2"), {func1()}),
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
