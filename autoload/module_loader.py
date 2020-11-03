@@ -171,7 +171,7 @@ class ModuleLoader:
             return self.__predicate
 
         def draw_comparison(self, file):
-            if type == self.Type.clazz:
+            if self.__type == self.Type.clazz:
                 return "".join(file.split("_")).lower()
             else:
                 return file.lower()
