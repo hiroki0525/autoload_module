@@ -28,7 +28,7 @@ except:
 ```
 ## Install
 ```
-pip install autoload_module
+pip install autoload-module
 ```
 ## Usage
 ### Constructor
@@ -118,12 +118,21 @@ loader.load_classes("..packageA.validator")
 loader.load_classes("../packageA/validator")
 ```
 
+#### load_functions
+```
+load_functions(pkg_name, [excludes])
+```
+This method read the Python package and return the tuple of functions.
+The usage is the same as `load_classes`.
+
 **NOTE**
-- To search class, **You must match the file name and class name.**
-For example, if you named the file `test_module.py`, you must named the class `TestModule`.
-When you want to customize the class name, use `@load_config` decorator and write `load=True` manually.
+- To search class or function, **You must match the name of file and the one of class or function.**
+For example, if you named the file `test_module.py`, you must named the class `TestModule` or the function `test_module`.
+When you want to customize their name, use `@load_config` decorator and write `load=True` manually.
     - validator_a.py
     ```python
+    from autoload.decorator import load_config
+  
     @load_config(load=True)
     class CustomValidator:
         def validate(self):
@@ -132,6 +141,8 @@ When you want to customize the class name, use `@load_config` decorator and writ
 - You can also control the order of loaded class objects using `@load_config` decorator.
     - validator_a.py
     ```python
+    from autoload.decorator import load_config
+  
     # sort in ascending order
     @load_config(order=1)
     class ValidatorA:
@@ -163,6 +174,13 @@ clazz().validate()
 # -> validate!!
 ```
 How to specify `file_name` is the same as that of `load_classes`.
+
+#### load_function
+```
+load_class(file_name)
+```
+This method read the Python file and return the function object.
+The usage is the same as `load_function`.
 
 ## License
 Released under the MIT license.

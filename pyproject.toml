@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "autoload-module"
+version = "1.1.0"
+description = "Python Autoload Module"
+authors = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
+license = "MIT"
+maintainers = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
+readme = "README.md"
+homepage = "https://github.com/hiroki0525/autoload_module"
+repository = "https://github.com/hiroki0525/autoload_module"
+documentation = "https://github.com/hiroki0525/autoload_module"
+keywords = ["python", "import", "autoload", "autoload_module", "metaprogramming"]
+classifiers = [
+    'Topic :: Software Development :: Libraries',
+    'Development Status :: 1 - Planning',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Programming Language :: Python :: Implementation :: PyPy',
+]
+packages = [
+    { include = "autoload" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
