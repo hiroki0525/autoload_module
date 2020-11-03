@@ -184,4 +184,5 @@ def load_config(order=None, load=False):
             resource.load_order = order
         resource.load_flg = load
         return resource
+
     return decorator
