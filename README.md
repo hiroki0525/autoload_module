@@ -177,10 +177,10 @@ How to specify `file_name` is the same as that of `load_classes`.
 
 #### load_function
 ```
-load_class(file_name)
+load_function(file_name)
 ```
-This method read the Python file and return the function object.
-The usage is the same as `load_function`.
+This method read the Python file and return a function object.
+The usage is the same as `load_class`.
 
 ## License
 Released under the MIT license.
