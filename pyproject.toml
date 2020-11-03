@@ -22,7 +22,7 @@ classifiers = [
     'Programming Language :: Python :: Implementation :: PyPy',
 ]
 packages = [
-    { include = "*.py", from = "autoload" },
+    { include = "autoload" },
 ]
 
 [tool.poetry.dependencies]

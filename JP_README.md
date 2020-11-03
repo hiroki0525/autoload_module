@@ -116,12 +116,21 @@ loader.load_classes("..packageA.validator")
 loader.load_classes("../packageA/validator")
 ```
 
+#### load_functions
+```
+load_functions(pkg_name, [excludes])
+```
+引数で与えられたパッケージ名から配下のモジュールをimportし、関数オブジェクトのタプルを返却します。
+使い方は `load_classes` と同じです。
+
 **NOTE**
-- クラスを検索するために, **モジュール名とクラス名を一致させてください.**
-例えば, もし `test_module.py` と命名したのであれば, クラス名は `TestModule` にしてください。
-クラス名をカスタマイズしたい場合は, `@load_config` デコレータで `load=True` を指定してください。
+- クラスや関数を検索するために, **モジュール名とクラス名また関数名を一致させてください.**
+例えば, もし `test_module.py` と命名したのであれば, クラス名は `TestModule` 、関数名は `test_module` にしてください。
+クラス名や関数名をカスタマイズしたい場合は, `@load_config` デコレータで `load=True` を指定してください。
     - validator_a.py
     ```python
+    from autoload.decorator import load_config
+  
     @load_config(load=True)
     class CustomValidator:
         def validate(self):
@@ -130,6 +139,8 @@ loader.load_classes("../packageA/validator")
 - 返却されるクラスオブジェクトに順番を持たせたいなら、同じく `@load_config` デコレータを使ってください。
     - validator_a.py
     ```python
+    from autoload.decorator import load_config
+  
     # 昇順でソートされます
     @load_config(order=1)
     class ValidatorA:
@@ -161,6 +172,12 @@ clazz().validate()
 # -> validate!!
 ```
 `file_name`の指定方法は `load_classes` と同じです。
+
+```
+load_function(file_name)
+```
+Pythonファイルをimportして関数オブジェクトを返却します。
+使い方は `load_class` と同じです。
 
 ## License
 Released under the MIT license.
