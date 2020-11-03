@@ -4,8 +4,7 @@ import os
 import sys
 
 __all__ = (
-    "ModuleLoader",
-    "load_config"
+    "ModuleLoader"
 )
 
 OP = os.path
@@ -176,13 +175,3 @@ class ModuleLoader:
                 return "".join(file.split("_")).lower()
             else:
                 return file.lower()
-
-
-def load_config(order=None, load=False):
-    def decorator(resource):
-        if order:
-            resource.load_order = order
-        resource.load_flg = load
-        return resource
-
-    return decorator
