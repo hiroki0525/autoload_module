@@ -2,6 +2,10 @@ import sys
 import unittest
 from pathlib import Path
 
+from tests.func.base.packageD.packageD_func1 import multiple2, multiple1, multiple3
+from tests.func.base.packageD.packageD_func2 import multiple4, multiple5
+from tests.func.base.packageD.packageD_func3 import packageD_func3
+
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
@@ -116,6 +120,18 @@ class TestAutoLoadModule(unittest.TestCase):
         for pkg_name, exclude in test_cases:
             with self.assertRaises(Exception):
                 self.loader.load_functions(pkg_name, exclude)
+
+
+    def test_load_multiple_functions(self):
+        basepkg_result = {multiple2(), multiple1(), multiple3(), multiple4(), multiple5(), packageD_func3()}
+        test_cases = (
+            ("packageD", None, basepkg_result),
+        )
+        for pkg_name, exclude, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, exclude=exclude):
+                functions = self.loader.load_functions(pkg_name, exclude)
+                results = set([function() for function in functions])
+                self.assertSetEqual(results, expected)
 
 if __name__ == '__main__':
     unittest.main()
