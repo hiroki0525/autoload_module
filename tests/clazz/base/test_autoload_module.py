@@ -28,6 +28,7 @@ class TestAutoLoadModule(unittest.TestCase):
 
     def test_initialize(self):
         test_cases = (
+            (ModuleLoader('').base_path, '/'),
             (ModuleLoader('/').base_path, '/'),
             (ModuleLoader('/test').base_path, '/test'),
             (ModuleLoader('/test/').base_path, '/test'),

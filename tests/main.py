@@ -9,6 +9,7 @@ from autoload.module_loader import ModuleLoader
 def main():
     print("--- start test -------------------------")
     loader = ModuleLoader()
+    print(f'Base path is {loader.base_path}')
     print(loader.load_class(".tests.clazz.base.module_1"))
     print(loader.load_classes("tests.clazz.packageA"))
     print(loader.load_function("./tests/func/base/func1.py"))

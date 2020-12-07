@@ -19,17 +19,19 @@ _DECORATOR_ATTR = "load_flg"
 def _detect_call_path():
     for path in inspect.stack():
         path_name = path.filename
-        filename = os_path.basename(path.filename)
+        filename = os_path.basename(path_name)
         if _THIS_FILE == filename:
             continue
         return path_name
 
 
 def _init_base_url(base_path=None):
-    if not base_path:
-        return os_path.dirname(_detect_call_path())
+    if base_path is None:
+        return _init_base_url(os_path.dirname(_detect_call_path()))
     if base_path == '/':
         return base_path
+    if base_path == '':
+        return '/'
     if base_path.endswith('/'):
         return base_path[:-1]
     return base_path
