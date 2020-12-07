@@ -26,6 +26,17 @@ class TestAutoLoadModule(unittest.TestCase):
         print('setup')
         self.loader = ModuleLoader()
 
+    def test_initialize(self):
+        test_cases = (
+            (ModuleLoader('').base_path, '/'),
+            (ModuleLoader('/').base_path, '/'),
+            (ModuleLoader('/test').base_path, '/test'),
+            (ModuleLoader('/test/').base_path, '/test'),
+        )
+        for path_name, expected in test_cases:
+            with self.subTest(path_name=path_name):
+                self.assertEqual(path_name, expected)
+
     def test_load_class(self):
         module_1 = Module1()
         module_a1 = ModuleA1()
