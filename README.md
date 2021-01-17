@@ -64,7 +64,7 @@ loader = ModuleLoader('/user/local/src/custom')
 ### Methods
 #### load_classes
 ```
-load_classes(pkg_name, [excludes])
+load_classes(pkg_name, [excludes, recursive])
 ```
 This method read the Python package and return the tuple of class objects.
 - Directory
@@ -73,6 +73,7 @@ project/
  ├ __init__.py
  ├ config.yaml
  ├ example.py
+ ├ subdirectory/
  ├ validator_a.py
  ├ validator_b.py
  └ validator_c.py
@@ -106,6 +107,12 @@ validator_classes = loader.load_classes("project", ["validator_a", "validator_b"
 [clazz().validate() for clazz in validator_classes]
 # -> validateC!!
 ```
+This function will check directory structure recursively if you specify `recursive=True`. 
+```python
+# 'recursive=False' is default.
+# In this case, the loader will also check 'project/subdirectory/'.
+validator_classes = loader.load_classes("project", recursive=True)
+```
 You can specify `pkg_name` as below.
 ```python
 loader.load_classes("validator.py")
@@ -120,7 +127,7 @@ loader.load_classes("../packageA/validator")
 
 #### load_functions
 ```
-load_functions(pkg_name, [excludes])
+load_functions(pkg_name, [excludes, recursive])
 ```
 This method read the Python package and return the tuple of functions.
 The usage is the same as `load_classes`.

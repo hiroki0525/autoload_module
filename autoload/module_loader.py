@@ -14,6 +14,9 @@ _DEFAULT_EXCLUDES = (
     _THIS_FILE,
 )
 _DECORATOR_ATTR = "load_flg"
+_EXCLUDE_DIRS = {
+    '__pycache__',
+}
 
 
 def _detect_call_path():
@@ -54,13 +57,13 @@ class ModuleLoader:
         self.__context = self.Context(self.Context.Type.func)
         return self.__load_resource(file_name)
 
-    def load_classes(self, pkg_name, excludes=None):
+    def load_classes(self, pkg_name, excludes=None, recursive=False):
         self.__context = self.Context(self.Context.Type.clazz)
-        return self.__load_resources(pkg_name, excludes=excludes)
+        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
-    def load_functions(self, pkg_name, excludes=None):
+    def load_functions(self, pkg_name, excludes=None, recursive=False):
         self.__context = self.Context(self.Context.Type.func)
-        return self.__load_resources(pkg_name, excludes=excludes, type='function')
+        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type='function')
 
     def __path_fix(self, name):
         if not name or name == '.' or name == '/' or name == './':
@@ -124,7 +127,7 @@ class ModuleLoader:
             del self.__context
             return resource
 
-    def __load_resources(self, pkg_name, excludes=None, type='class'):
+    def __load_resources(self, pkg_name, excludes=None, recursive=False, type='class'):
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
@@ -152,7 +155,15 @@ class ModuleLoader:
                 if self.__context.draw_comparison(file) != mod_name.lower():
                     continue
                 classes.append(clazz)
-        del self.__context
+        if recursive is True:
+            dirs = [f for f in listdir(target_dir) if os_path.isdir(f'{target_dir}{f}') and f not in _EXCLUDE_DIRS]
+            if len(dirs) > 0:
+                for dir in dirs:
+                    fix_pkg_name = pkg_name
+                    if not fix_pkg_name.endswith('/'):
+                        fix_pkg_name += '/'
+                    recursive_classes = self.__load_resources(fix_pkg_name + dir, excludes=excludes, recursive=recursive, type=type)
+                    classes += recursive_classes
         has_order_classes = [clazz for clazz in classes if hasattr(clazz, 'load_order') and clazz.load_order]
         if not has_order_classes:
             return tuple(classes)

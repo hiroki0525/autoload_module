@@ -104,6 +104,12 @@ validator_classes = loader.load_classes("project", ["validator_a", "validator_b"
 [clazz().validate() for clazz in validator_classes]
 # -> validateC!!
 ```
+`recursive=True`を指定するとディレクトリ構造も再起的にチェックします。 
+```python
+# recursive=Falseがデフォルト。
+# projectのサブディレクトリであるsubdirectoryも読み込まれます。
+validator_classes = loader.load_classes("project", recursive=True)
+```
 なお、パッケージ名は次のように指定できます。
 ```python
 loader.load_classes("validator.py")

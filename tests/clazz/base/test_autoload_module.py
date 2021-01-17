@@ -144,5 +144,18 @@ class TestAutoLoadModule(unittest.TestCase):
             with self.assertRaises(Exception):
                 self.loader.load_classes(pkg_name, exclude)
 
+    def test_load_classes_recursive(self):
+        pkgA_result = (ModuleA2(), ModuleA3(), ModuleA1())
+        pkgB_result = (ModuleB3(), ModuleB2(), CustomModuleB1())
+        test_cases = (
+            ("../packageA", False, pkgA_result),
+            ("../packageA", True, pkgA_result + pkgB_result),
+        )
+        for pkg_name, recursive, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, recursive=recursive):
+                classes = self.loader.load_classes(pkg_name, recursive=recursive)
+                instances = tuple([clazz() for clazz in classes])
+                self.assertTupleEqual(instances, expected)
+
 if __name__ == '__main__':
     unittest.main()
