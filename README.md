@@ -69,14 +69,17 @@ load_classes(pkg_name, [excludes, recursive])
 This method read the Python package and return the tuple of class objects.
 - Directory
 ```
-project/
+pkg/
+ ├ example.py
  ├ __init__.py
  ├ config.yaml
- ├ example.py
- ├ subdirectory/
- ├ validator_a.py
- ├ validator_b.py
- └ validator_c.py
+ └ main/
+     ├ validator_a.py
+     ├ validator_b.py
+     ├ validator_c.py
+     └ sub/
+        ├ validator_d.py
+        └ validator_e.py
 ```
 - validator_a.py
 ```python
@@ -90,7 +93,7 @@ loader = ModuleLoader()
 
 # Automatically read modules without '__init__.py', not py file, and this file.
 # return the tuple of ValidateA, ValidatorB, and ValidatorC class objects
-validator_classes = loader.load_classes("project")
+validator_classes = loader.load_classes("main")
 
 # initialize and execute method
 [clazz().validate() for clazz in validator_classes]
@@ -102,7 +105,7 @@ You can also load only specific modules using `excludes` variable as below.
 ```python
 # 'excludes' is a iterable object like tuple, list.
 # You must specify module names in 'excludes'.
-validator_classes = loader.load_classes("project", ["validator_a", "validator_b"])
+validator_classes = loader.load_classes("main", ["validator_a", "validator_b"])
 
 [clazz().validate() for clazz in validator_classes]
 # -> validateC!!
@@ -110,19 +113,19 @@ validator_classes = loader.load_classes("project", ["validator_a", "validator_b"
 This function will check directory structure recursively if you specify `recursive=True`. 
 ```python
 # 'recursive=False' is default.
-# In this case, the loader will also check 'project/subdirectory/'.
-validator_classes = loader.load_classes("project", recursive=True)
+# In this case, the loader will also check 'pkg/main/sub/'.
+validator_classes = loader.load_classes("main", recursive=True)
 ```
 You can specify `pkg_name` as below.
 ```python
-loader.load_classes("validator.py")
-loader.load_classes(".validator")
-loader.load_classes("/validator")
-loader.load_classes("./validator")
-
-# relative path
-loader.load_classes("..packageA.validator")
-loader.load_classes("../packageA/validator")
+loader.load_classes("main/validator_a.py")
+loader.load_classes("main.validator_a")
+loader.load_classes("./main/validator_a")
+loader.load_classes(".main.validator_a")
+loader.load_classes("main.sub.validator_d")
+loader.load_classes("./main/sub/validator_d")
+loader.load_classes("../otherpkg")
+loader.load_classes("..otherpkg")
 ```
 
 #### load_functions

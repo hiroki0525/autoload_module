@@ -67,13 +67,17 @@ load_classes(pkg_name, [excludes])
 引数で与えられたパッケージ名から配下のモジュールをimportし、クラスオブジェクトのタプルを返却します。
 - Directory
 ```
-project/
+pkg/
+ ├ example.py
  ├ __init__.py
  ├ config.yaml
- ├ example.py
- ├ validator_a.py
- ├ validator_b.py
- └ validator_c.py
+ └ main/
+     ├ validator_a.py
+     ├ validator_b.py
+     ├ validator_c.py
+     └ sub/
+        ├ validator_d.py
+        └ validator_e.py
 ```
 - validator_a.py
 ```python
@@ -87,7 +91,7 @@ loader = ModuleLoader()
 
 # '__init__.py'やpyファイル以外のファイル(yamlなど)、このファイルを除いて自動的に読み込みます
 # 戻り値は（<class ValidateA>, <class ValidatorB>, <class ValidatorC>）です
-validator_classes = loader.load_classes("project")
+validator_classes = loader.load_classes("main")
 
 # インスタンス化してメソッド実行
 [clazz().validate() for clazz in validator_classes]
@@ -99,7 +103,7 @@ validator_classes = loader.load_classes("project")
 ```python
 # 'excludes' は iterable なオブジェクトを指定します
 # 'excludes' のリスト内はモジュール名を指定してください
-validator_classes = loader.load_classes("project", ["validator_a", "validator_b"])
+validator_classes = loader.load_classes("main", ["validator_a", "validator_b"])
 
 [clazz().validate() for clazz in validator_classes]
 # -> validateC!!
@@ -107,19 +111,19 @@ validator_classes = loader.load_classes("project", ["validator_a", "validator_b"
 `recursive=True`を指定するとディレクトリ構造も再起的にチェックします。 
 ```python
 # recursive=Falseがデフォルト。
-# projectのサブディレクトリであるsubdirectoryも読み込まれます。
-validator_classes = loader.load_classes("project", recursive=True)
+# サブディレクトリであるsub/も読み込まれます。
+validator_classes = loader.load_classes("main", recursive=True)
 ```
 なお、パッケージ名は次のように指定できます。
 ```python
-loader.load_classes("validator.py")
-loader.load_classes(".validator")
-loader.load_classes("/validator")
-loader.load_classes("./validator")
-
-# 相対パス
-loader.load_classes("..packageA.validator")
-loader.load_classes("../packageA/validator")
+loader.load_classes("main/validator_a.py")
+loader.load_classes("main.validator_a")
+loader.load_classes("./main/validator_a")
+loader.load_classes(".main.validator_a")
+loader.load_classes("main.sub.validator_d")
+loader.load_classes("./main/sub/validator_d")
+loader.load_classes("../otherpkg")
+loader.load_classes("..otherpkg")
 ```
 
 #### load_functions
