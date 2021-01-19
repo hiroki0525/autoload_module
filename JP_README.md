@@ -113,6 +113,13 @@ validator_classes = loader.load_classes("main", ["validator_a", "validator_b"])
 # recursive=Falseがデフォルト。
 # サブディレクトリであるsub/も読み込まれます。
 validator_classes = loader.load_classes("main", recursive=True)
+
+[clazz().validate() for clazz in validator_classes]
+# -> validateA!!
+# -> validateB!!
+# -> validateC!!
+# -> validateD!!
+# -> validateE!!
 ```
 なお、パッケージ名は次のように指定できます。
 ```python

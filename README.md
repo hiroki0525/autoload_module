@@ -115,6 +115,13 @@ This function will check directory structure recursively if you specify `recursi
 # 'recursive=False' is default.
 # In this case, the loader will also check 'pkg/main/sub/'.
 validator_classes = loader.load_classes("main", recursive=True)
+
+[clazz().validate() for clazz in validator_classes]
+# -> validateA!!
+# -> validateB!!
+# -> validateC!!
+# -> validateD!!
+# -> validateE!!
 ```
 You can specify `pkg_name` as below.
 ```python
