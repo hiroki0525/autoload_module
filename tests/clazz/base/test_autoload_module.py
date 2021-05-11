@@ -2,6 +2,10 @@ import sys
 import unittest
 from pathlib import Path
 
+from tests.clazz.base.packageD.module_d1 import ModuleD1, ModuleD2, ModuleD3
+from tests.clazz.base.packageD.module_d2 import ModuleD4, ModuleD5
+from tests.clazz.base.packageD.module_d3 import ModuleD6
+
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
@@ -157,6 +161,18 @@ class TestAutoLoadModule(unittest.TestCase):
                 classes = self.loader.load_classes(pkg_name, recursive=recursive)
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
+
+    def test_load_multiple_classes(self):
+        pkgD_result = (ModuleD1(), ModuleD2(), ModuleD3(), ModuleD4(), ModuleD5(), ModuleD6())
+        test_cases = (
+            ("packageD", pkgD_result),
+        )
+        for pkg_name, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name):
+                classes = self.loader.load_classes(pkg_name)
+                instances = tuple([clazz() for clazz in classes])
+                self.assertTupleEqual(instances, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
