@@ -151,7 +151,7 @@ class ModuleLoader:
             for mod_name, mod in inspect.getmembers(module, self.__context.predicate):
                 if hasattr(mod, _DECORATOR_ATTR) and mod.load_flg:
                     mods.append(mod)
-                    break
+                    continue
                 if self.__context.draw_comparison(file) != mod_name.lower():
                     continue
                 mods.append(mod)
