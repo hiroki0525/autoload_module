@@ -126,7 +126,7 @@ class TestAutoLoadModule(unittest.TestCase):
         pkgB_result = {packageB_func3(), packageB_func2(), packageB_func1()}
         test_cases = (
             ("../packageA", False, pkgA_result),
-            # expectd packageA is ordered, B is random.
+            # expected packageA is ordered, B is random.
             ("../packageA", True, pkgA_result | pkgB_result),
         )
         for pkg_name, recursive, expected in test_cases:
