@@ -145,16 +145,16 @@ class ModuleLoader:
                 exclude_files.append(exclude)
         fix_excludes = [exclude.replace('.py', '') for exclude in exclude_files]
         excluded_files = tuple(set(files) - set(fix_excludes))
-        classes = []
+        mods = []
         for file in excluded_files:
             module = importlib.import_module(file)
-            for mod_name, clazz in inspect.getmembers(module, self.__context.predicate):
-                if hasattr(clazz, _DECORATOR_ATTR) and clazz.load_flg:
-                    classes.append(clazz)
+            for mod_name, mod in inspect.getmembers(module, self.__context.predicate):
+                if hasattr(mod, _DECORATOR_ATTR) and mod.load_flg:
+                    mods.append(mod)
                     break
                 if self.__context.draw_comparison(file) != mod_name.lower():
                     continue
-                classes.append(clazz)
+                mods.append(mod)
         if recursive is True:
             dirs = [f for f in listdir(target_dir) if os_path.isdir(f'{target_dir}{f}') and f not in _EXCLUDE_DIRS]
             if len(dirs) > 0:
@@ -162,16 +162,16 @@ class ModuleLoader:
                     fix_pkg_name = pkg_name
                     if not fix_pkg_name.endswith('/'):
                         fix_pkg_name += '/'
-                    recursive_classes = self.__load_resources(fix_pkg_name + dir, excludes=excludes, recursive=recursive, type=type)
-                    classes += recursive_classes
-        has_order_classes = [clazz for clazz in classes if hasattr(clazz, 'load_order') and clazz.load_order]
-        if not has_order_classes:
-            return tuple(classes)
-        no_has_order_classes = [clazz for clazz in classes if not hasattr(clazz, 'load_order') or not clazz.load_order]
-        if not no_has_order_classes:
-            return tuple(sorted(has_order_classes, key=lambda clazz: clazz.load_order))
-        ordered_classes = sorted(has_order_classes, key=lambda clazz: clazz.load_order) + no_has_order_classes
-        return tuple(ordered_classes)
+                    recursive_mods = self.__load_resources(fix_pkg_name + dir, excludes=excludes, recursive=recursive, type=type)
+                    mods += recursive_mods
+        has_order_mods = [mod for mod in mods if hasattr(mod, 'load_order') and mod.load_order]
+        if not has_order_mods:
+            return tuple(mods)
+        no_has_order_mods = [mod for mod in mods if not hasattr(mod, 'load_order') or not mod.load_order]
+        if not no_has_order_mods:
+            return tuple(sorted(has_order_mods, key=lambda mod: mod.load_order))
+        ordered_mods = sorted(has_order_mods, key=lambda mod: mod.load_order) + no_has_order_mods
+        return tuple(ordered_mods)
 
     class Context:
         # Don't use enum because it is not supported under Python 3.4 version
