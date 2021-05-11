@@ -121,6 +121,19 @@ class TestAutoLoadModule(unittest.TestCase):
             with self.assertRaises(Exception):
                 self.loader.load_functions(pkg_name, exclude)
 
+    def test_load_functions_recursive(self):
+        pkgA_result = {packageA_func2(), packageA_func3(), packageA_func1()}
+        pkgB_result = {packageB_func3(), packageB_func2(), packageB_func1()}
+        test_cases = (
+            ("../packageA", False, pkgA_result),
+            # expectd packageA is ordered, B is random.
+            ("../packageA", True, pkgA_result | pkgB_result),
+        )
+        for pkg_name, recursive, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, recursive=recursive):
+                functions = self.loader.load_functions(pkg_name, recursive=recursive)
+                instances = set([function() for function in functions])
+                self.assertSetEqual(instances, expected)
 
     def test_load_multiple_functions(self):
         basepkg_result = {multiple2(), multiple1(), multiple3(), multiple4(), multiple5(), packageD_func3()}
@@ -132,6 +145,7 @@ class TestAutoLoadModule(unittest.TestCase):
                 functions = self.loader.load_functions(pkg_name, exclude)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
+
 
 if __name__ == '__main__':
     unittest.main()

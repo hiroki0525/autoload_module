@@ -26,6 +26,17 @@ class TestAutoLoadModule(unittest.TestCase):
         print('setup')
         self.loader = ModuleLoader()
 
+    def test_initialize(self):
+        test_cases = (
+            (ModuleLoader('').base_path, '/'),
+            (ModuleLoader('/').base_path, '/'),
+            (ModuleLoader('/test').base_path, '/test'),
+            (ModuleLoader('/test/').base_path, '/test'),
+        )
+        for path_name, expected in test_cases:
+            with self.subTest(path_name=path_name):
+                self.assertEqual(path_name, expected)
+
     def test_load_class(self):
         module_1 = Module1()
         module_a1 = ModuleA1()
@@ -132,6 +143,20 @@ class TestAutoLoadModule(unittest.TestCase):
         for pkg_name, exclude in test_cases:
             with self.assertRaises(Exception):
                 self.loader.load_classes(pkg_name, exclude)
+
+    def test_load_classes_recursive(self):
+        pkgA_result = {ModuleA2(), ModuleA3(), ModuleA1()}
+        pkgB_result = {ModuleB3(), ModuleB2(), CustomModuleB1()}
+        test_cases = (
+            ("../packageA", False, pkgA_result),
+            # expected packageA is ordered, B is random.
+            ("../packageA", True, pkgA_result | pkgB_result),
+        )
+        for pkg_name, recursive, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, recursive=recursive):
+                classes = self.loader.load_classes(pkg_name, recursive=recursive)
+                instances = set([clazz() for clazz in classes])
+                self.assertSetEqual(instances, expected)
 
 if __name__ == '__main__':
     unittest.main()

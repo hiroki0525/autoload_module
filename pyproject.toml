@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autoload-module"
-version = "1.1.0"
+version = "1.2.0"
 description = "Python Autoload Module"
 authors = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
 license = "MIT"
@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/hiroki0525/autoload_module"
 repository = "https://github.com/hiroki0525/autoload_module"
 documentation = "https://github.com/hiroki0525/autoload_module"
-keywords = ["python", "import", "autoload", "autoload_module", "metaprogramming"]
+keywords = ["python", "import", "autoload", "autoload_module", "metaprogramming", "dynamic import"]
 classifiers = [
     'Topic :: Software Development :: Libraries',
     'Development Status :: 1 - Planning',
