@@ -1,5 +1,6 @@
 import importlib
 import inspect
+from enum import Enum, auto
 from os import path as os_path
 from os import listdir
 from sys import path as sys_path
@@ -58,12 +59,14 @@ class ModuleLoader:
         return self.__load_resource(file_name)
 
     def load_classes(self, pkg_name, excludes=None, recursive=False):
-        self.__context = self.Context(self.Context.Type.clazz)
-        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
+        type = self.Context.Type.clazz
+        self.__context = self.Context(type)
+        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
     def load_functions(self, pkg_name, excludes=None, recursive=False):
-        self.__context = self.Context(self.Context.Type.func)
-        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type='function')
+        type = self.Context.Type.func
+        self.__context = self.Context(type)
+        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
     def __path_fix(self, name):
         if not name or name == '.' or name == '/' or name == './':
@@ -127,7 +130,7 @@ class ModuleLoader:
             del self.__context
             return resource
 
-    def __load_resources(self, pkg_name, excludes=None, recursive=False, type='class'):
+    def __load_resources(self, pkg_name, excludes=None, recursive=False, type=None):
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
@@ -162,7 +165,8 @@ class ModuleLoader:
                     fix_pkg_name = pkg_name
                     if not fix_pkg_name.endswith('/'):
                         fix_pkg_name += '/'
-                    recursive_mods = self.__load_resources(fix_pkg_name + dir, excludes=excludes, recursive=recursive, type=type)
+                    recursive_mods = self.__load_resources(fix_pkg_name + dir, excludes=excludes, recursive=recursive,
+                                                           type=type)
                     mods += recursive_mods
         has_order_mods = [mod for mod in mods if hasattr(mod, 'load_order') and mod.load_order]
         if not has_order_mods:
@@ -174,10 +178,9 @@ class ModuleLoader:
         return tuple(ordered_mods)
 
     class Context:
-        # Don't use enum because it is not supported under Python 3.4 version
-        class Type:
-            func = 'function'
-            clazz = 'class'
+        class Type(Enum):
+            func = auto()
+            clazz = auto()
 
         def __init__(self, type):
             self.__type = type
