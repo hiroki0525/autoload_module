@@ -9,41 +9,75 @@ __all__ = (
     "ModuleLoader"
 )
 
-_THIS_FILE = os_path.basename(__file__)
-_DEFAULT_EXCLUDES = (
-    '__init__.py',
-    _THIS_FILE,
-)
-_DECORATOR_ATTR = "load_flg"
-_EXCLUDE_DIRS = {
-    '__pycache__',
-}
 
+class __Private:
+    """
+    Private namespace
+    """
+    THIS_FILE = os_path.basename(__file__)
+    DEFAULT_EXCLUDES = (
+        '__init__.py',
+        THIS_FILE,
+    )
+    DECORATOR_ATTR = "load_flg"
+    EXCLUDE_DIRS = {
+        '__pycache__',
+    }
 
-def _detect_call_path():
-    for path in inspect.stack():
-        path_name = path.filename
-        filename = os_path.basename(path_name)
-        if _THIS_FILE == filename:
-            continue
-        return path_name
+    def __new__(cls, *args, **kwargs):
+        raise Exception(f"{cls.__name__} can't be initialized.")
 
+    @classmethod
+    def detect_call_path(cls):
+        for path in inspect.stack():
+            path_name = path.filename
+            filename = os_path.basename(path_name)
+            if cls.THIS_FILE == filename:
+                continue
+            return path_name
 
-def _init_base_url(base_path=None):
-    if base_path is None:
-        return _init_base_url(os_path.dirname(_detect_call_path()))
-    if base_path == '/':
+    @classmethod
+    def init_base_url(cls, base_path=None):
+        if base_path is None:
+            return cls.init_base_url(os_path.dirname(cls.detect_call_path()))
+        if base_path == '/':
+            return base_path
+        if base_path == '':
+            return '/'
+        if base_path.endswith('/'):
+            return base_path[:-1]
         return base_path
-    if base_path == '':
-        return '/'
-    if base_path.endswith('/'):
-        return base_path[:-1]
-    return base_path
+
+    class Context:
+        class LoadType(Enum):
+            func = auto()
+            clazz = auto()
+
+        def __init__(self, type):
+            self.__type = type
+            if type == self.LoadType.clazz:
+                self.__predicate = inspect.isclass
+            else:
+                self.__predicate = inspect.isfunction
+
+        @property
+        def predicate(self):
+            return self.__predicate
+
+        def draw_comparison(self, file):
+            if self.__type == self.LoadType.clazz:
+                return "".join(file.split("_")).lower()
+            else:
+                return file.lower()
+
+
+def _access_private():
+    return __Private
 
 
 class ModuleLoader:
     def __init__(self, base_path=None):
-        self.__base_path = _init_base_url(base_path)
+        self.__base_path = _access_private().init_base_url(base_path)
         self.__context = None
 
     @property
@@ -51,21 +85,25 @@ class ModuleLoader:
         return self.__base_path
 
     def load_class(self, file_name):
-        self.__context = self.Context(self.Context.Type.clazz)
+        private = _access_private()
+        self.__context = private.Context(private.Context.LoadType.clazz)
         return self.__load_resource(file_name)
 
     def load_function(self, file_name):
-        self.__context = self.Context(self.Context.Type.func)
+        private = _access_private()
+        self.__context = private.Context(private.Context.LoadType.func)
         return self.__load_resource(file_name)
 
     def load_classes(self, pkg_name, excludes=None, recursive=False):
-        type = self.Context.Type.clazz
-        self.__context = self.Context(type)
+        private = _access_private()
+        type = private.Context.LoadType.clazz
+        self.__context = private.Context(type)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
     def load_functions(self, pkg_name, excludes=None, recursive=False):
-        type = self.Context.Type.func
-        self.__context = self.Context(type)
+        private = _access_private()
+        type = private.Context.LoadType.func
+        self.__context = private.Context(type)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
     def __path_fix(self, name):
@@ -123,7 +161,7 @@ class ModuleLoader:
         module = importlib.import_module(target_file)
         comparison = self.__context.draw_comparison(target_file)
         for mod_name, resource in inspect.getmembers(module, self.__context.predicate):
-            if hasattr(resource, _DECORATOR_ATTR) and resource.load_flg:
+            if hasattr(resource, _access_private().DECORATOR_ATTR) and resource.load_flg:
                 return resource
             if comparison != mod_name.lower():
                 continue
@@ -137,8 +175,9 @@ class ModuleLoader:
         if target_dir not in sys_path:
             sys_path.append(target_dir)
         files = [os_path.splitext(file)[0] for file in listdir(target_dir) if file.endswith('.py')]
-        exclude_files = list(_DEFAULT_EXCLUDES)
-        exclude_files.append(os_path.basename(_detect_call_path()))
+        private = _access_private()
+        exclude_files = list(private.DEFAULT_EXCLUDES)
+        exclude_files.append(os_path.basename(private.detect_call_path()))
         if excludes:
             if not iter(excludes):
                 raise TypeError('excludes variable must be iterable.')
@@ -152,14 +191,14 @@ class ModuleLoader:
         for file in excluded_files:
             module = importlib.import_module(file)
             for mod_name, mod in inspect.getmembers(module, self.__context.predicate):
-                if hasattr(mod, _DECORATOR_ATTR) and mod.load_flg:
+                if hasattr(mod, private.DECORATOR_ATTR) and mod.load_flg:
                     mods.append(mod)
                     continue
                 if self.__context.draw_comparison(file) != mod_name.lower():
                     continue
                 mods.append(mod)
         if recursive is True:
-            dirs = [f for f in listdir(target_dir) if os_path.isdir(f'{target_dir}{f}') and f not in _EXCLUDE_DIRS]
+            dirs = [f for f in listdir(target_dir) if os_path.isdir(f'{target_dir}{f}') and f not in private.EXCLUDE_DIRS]
             if len(dirs) > 0:
                 for dir in dirs:
                     fix_pkg_name = pkg_name
@@ -176,25 +215,3 @@ class ModuleLoader:
             return tuple(sorted(has_order_mods, key=lambda mod: mod.load_order))
         ordered_mods = sorted(has_order_mods, key=lambda mod: mod.load_order) + no_has_order_mods
         return tuple(ordered_mods)
-
-    class Context:
-        class Type(Enum):
-            func = auto()
-            clazz = auto()
-
-        def __init__(self, type):
-            self.__type = type
-            if type == self.Type.clazz:
-                self.__predicate = inspect.isclass
-            else:
-                self.__predicate = inspect.isfunction
-
-        @property
-        def predicate(self):
-            return self.__predicate
-
-        def draw_comparison(self, file):
-            if self.__type == self.Type.clazz:
-                return "".join(file.split("_")).lower()
-            else:
-                return file.lower()
