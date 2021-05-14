@@ -29,10 +29,11 @@ class __Private:
 
     @classmethod
     def detect_call_path(cls):
+        this_file = cls.THIS_FILE
         for path in inspect.stack():
             path_name = path.filename
             filename = os_path.basename(path_name)
-            if cls.THIS_FILE == filename:
+            if this_file == filename:
                 continue
             return path_name
 
@@ -55,20 +56,14 @@ class __Private:
 
         def __init__(self, type):
             self.__type = type
-            if type == self.LoadType.clazz:
-                self.__predicate = inspect.isclass
-            else:
-                self.__predicate = inspect.isfunction
+            self.__predicate = inspect.isclass if type == self.LoadType.clazz else inspect.isfunction
 
         @property
         def predicate(self):
             return self.__predicate
 
         def draw_comparison(self, file):
-            if self.__type == self.LoadType.clazz:
-                return "".join(file.split("_")).lower()
-            else:
-                return file.lower()
+            return "".join(file.split("_")).lower() if self.__type == self.LoadType.clazz else file.lower()
 
 
 def _access_private():
@@ -156,8 +151,7 @@ class ModuleLoader:
         fix_path_arr = self.__path_fix(target_file).split('/')
         target_file = fix_path_arr[-2]
         target_path = '/'.join(fix_path_arr[:-2])
-        if target_path not in sys_path:
-            sys_path.append(target_path)
+        target_path not in sys_path and sys_path.append(target_path)
         module = importlib.import_module(target_file)
         comparison = self.__context.draw_comparison(target_file)
         for mod_name, resource in inspect.getmembers(module, self.__context.predicate):
@@ -172,8 +166,7 @@ class ModuleLoader:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
-        if target_dir not in sys_path:
-            sys_path.append(target_dir)
+        target_dir not in sys_path and sys_path.append(target_dir)
         files = [os_path.splitext(file)[0] for file in listdir(target_dir) if file.endswith('.py')]
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
