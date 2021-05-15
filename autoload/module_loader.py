@@ -4,7 +4,7 @@ from enum import Enum, auto
 from os import path as os_path
 from os import listdir
 from sys import path as sys_path
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Callable, Tuple, Any
 
 __all__ = (
     "ModuleLoader"
@@ -31,10 +31,10 @@ class __Private:
     @classmethod
     def detect_call_path(cls):
         this_file = cls.THIS_FILE
-        for path in inspect.stack():
+        stack = inspect.stack()
+        for path in stack:
             path_name = path.filename
-            filename = os_path.basename(path_name)
-            if this_file == filename:
+            if this_file == os_path.basename(path_name):
                 continue
             return path_name
 
@@ -85,7 +85,7 @@ class ModuleLoader:
         self.__context = private.Context(private.Context.LoadType.clazz)
         return self.__load_resource(file_name)
 
-    def load_function(self, file_name: str):
+    def load_function(self, file_name: str) -> Callable:
         private = _access_private()
         self.__context = private.Context(private.Context.LoadType.func)
         return self.__load_resource(file_name)
@@ -96,7 +96,7 @@ class ModuleLoader:
         self.__context = private.Context(type)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
-    def load_functions(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False):
+    def load_functions(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False) -> Tuple[Callable]:
         private = _access_private()
         type = private.Context.LoadType.func
         self.__context = private.Context(type)
@@ -163,7 +163,7 @@ class ModuleLoader:
             del self.__context
             return resource
 
-    def __load_resources(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False, type=None):
+    def __load_resources(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False, type=None) -> Tuple[Any]:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
