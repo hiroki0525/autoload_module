@@ -152,9 +152,10 @@ class ModuleLoader:
                 if hasattr(mod, _DECORATOR_ATTR) and mod.load_flg:
                     mods.append(mod)
                     continue
-                if self.__context.draw_comparison(file) != mod_name.lower():
-                    continue
-                mods.append(mod)
+                if self.__context.draw_comparison(file) == mod_name.lower():
+                    if hasattr(mod, _DECORATOR_ATTR) and not mod.load_flg:
+                        continue
+                    mods.append(mod)
         if recursive is True:
             dirs = [f for f in listdir(target_dir) if os_path.isdir(f'{target_dir}{f}') and f not in _EXCLUDE_DIRS]
             if len(dirs) > 0:

@@ -63,11 +63,12 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertEqual(self.loader.load_class(file_name)(), expected)
 
     def test_load_classes_exclude(self):
-        basepkg_result = {Module3(), Module2(), Module1()}
+        # Module2 tagged 'load = False'
+        basepkg_result = {Module3(), Module1()}
         test_cases = (
             (".", None, basepkg_result),
             (".", [], basepkg_result),
-            (".", ["module_3"], {Module2(), Module1()}),
+            (".", ["module_3"], {Module1()}),
             (".", ["module_3", "module_2"], {Module1()}),
             (".", ("module_3", "module_2"), {Module1()}),
         )
@@ -107,7 +108,7 @@ class TestAutoLoadModule(unittest.TestCase):
 
     def test_load_classes_no_order(self):
         # Module1 has other python package.
-        basepkg_result = {Module3(), Module2(), Module1()}
+        basepkg_result = {Module3(), Module1()}
         test_cases = (
             (".", None, basepkg_result),
             ("", None, basepkg_result),
