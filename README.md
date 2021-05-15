@@ -101,13 +101,29 @@ validator_classes = loader.load_classes("main")
 # -> validateB!!
 # -> validateC!!
 ```
-You can also load only specific modules using `excludes` variable as below.
+You can also load only specific modules using `excludes` variable or `load_config` decorator as below.
 ```python
+# Pattern1: 'excludes'
 # 'excludes' is a iterable object like tuple, list.
 # You must specify module names in 'excludes'.
-validator_classes = loader.load_classes("main", ["validator_a", "validator_b"])
+validator_classes = loader.load_classes("main", ["validator_a"])
 
 [clazz().validate() for clazz in validator_classes]
+# -> validateB!!
+# -> validateC!!
+
+# Pattern2: 'load_config'
+from autoload.decorator import load_config
+
+@load_config(load=False)
+class ValidatorA:
+  def validate(self):
+    print("validateA!!")
+
+validator_classes = loader.load_classes("main")
+
+[clazz().validate() for clazz in validator_classes]
+# -> validateB!!
 # -> validateC!!
 ```
 This function will check directory structure recursively if you specify `recursive=True`. 
@@ -143,14 +159,14 @@ This method read the Python package and return the tuple of functions.
 The usage is the same as `load_classes`.
 
 **NOTE**
-- To search class or function, **You must match the name of file and the one of class or function.**
-For example, if you named the file `test_module.py`, you must named the class `TestModule` or the function `test_module`.
-When you want to customize their name, use `@load_config` decorator and write `load=True` manually.
+- To search class or function, **You must match the name of file, and the one of class or function.**
+For example, if you named the file `test_module.py`, you must name the class `TestModule` or the function `test_module`.
+When you want to customize their name, use `@load_config` decorator.
     - validator_a.py
     ```python
     from autoload.decorator import load_config
   
-    @load_config(load=True)
+    @load_config()
     class CustomValidator:
         def validate(self):
             print("validateA!!")

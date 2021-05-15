@@ -6,11 +6,11 @@ class NotLoad(TestModule):
     pass
 
 
-@load_config(load=True, order=4)
+@load_config(order=4)
 class ModuleD4(TestModule):
     pass
 
 
-@load_config(load=True, order=5)
+@load_config(order=5)
 class ModuleD5(TestModule):
     pass
