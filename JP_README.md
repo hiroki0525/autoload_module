@@ -99,13 +99,28 @@ validator_classes = loader.load_classes("main")
 # -> validateB!!
 # -> validateC!!
 ```
-特定のモジュールを読み込みから外したい場合は `excludes` を使ってください。
+特定のモジュールを読み込みから外したい場合は `excludes` を使うか、もしくは `load_config` デコレータを使ってください。
 ```python
+# Pattern1: 'excludes'
 # 'excludes' は iterable なオブジェクトを指定します
 # 'excludes' のリスト内はモジュール名を指定してください
 validator_classes = loader.load_classes("main", ["validator_a", "validator_b"])
 
 [clazz().validate() for clazz in validator_classes]
+# -> validateC!!
+
+# Pattern2: 'load_config'
+from autoload.decorator import load_config
+
+@load_config(load=False)
+class ValidatorA:
+  def validate(self):
+    print("validateA!!")
+
+validator_classes = loader.load_classes("main")
+
+[clazz().validate() for clazz in validator_classes]
+# -> validateB!!
 # -> validateC!!
 ```
 `recursive=True`を指定するとディレクトリ構造も再起的にチェックします。 

@@ -159,8 +159,8 @@ This method read the Python package and return the tuple of functions.
 The usage is the same as `load_classes`.
 
 **NOTE**
-- To search class or function, **You must match the name of file and the one of class or function.**
-For example, if you named the file `test_module.py`, you must named the class `TestModule` or the function `test_module`.
+- To search class or function, **You must match the name of file, and the one of class or function.**
+For example, if you named the file `test_module.py`, you must name the class `TestModule` or the function `test_module`.
 When you want to customize their name, use `@load_config` decorator.
     - validator_a.py
     ```python
