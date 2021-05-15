@@ -4,6 +4,7 @@ from enum import Enum, auto
 from os import path as os_path
 from os import listdir
 from sys import path as sys_path
+from typing import Optional, Iterable
 
 __all__ = (
     "ModuleLoader"
@@ -38,7 +39,7 @@ class __Private:
             return path_name
 
     @classmethod
-    def init_base_url(cls, base_path=None):
+    def init_base_url(cls, base_path: Optional[str] = None):
         if base_path is None:
             return cls.init_base_url(os_path.dirname(cls.detect_call_path()))
         if base_path == '/':
@@ -71,37 +72,37 @@ def _access_private():
 
 
 class ModuleLoader:
-    def __init__(self, base_path=None):
+    def __init__(self, base_path: Optional[str] = None):
         self.__base_path = _access_private().init_base_url(base_path)
         self.__context = None
 
     @property
-    def base_path(self):
+    def base_path(self) -> str:
         return self.__base_path
 
-    def load_class(self, file_name):
+    def load_class(self, file_name: str):
         private = _access_private()
         self.__context = private.Context(private.Context.LoadType.clazz)
         return self.__load_resource(file_name)
 
-    def load_function(self, file_name):
+    def load_function(self, file_name: str):
         private = _access_private()
         self.__context = private.Context(private.Context.LoadType.func)
         return self.__load_resource(file_name)
 
-    def load_classes(self, pkg_name, excludes=None, recursive=False):
+    def load_classes(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False):
         private = _access_private()
         type = private.Context.LoadType.clazz
         self.__context = private.Context(type)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
-    def load_functions(self, pkg_name, excludes=None, recursive=False):
+    def load_functions(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False):
         private = _access_private()
         type = private.Context.LoadType.func
         self.__context = private.Context(type)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive, type=type)
 
-    def __path_fix(self, name):
+    def __path_fix(self, name: str):
         if not name or name == '.' or name == '/' or name == './':
             return self.__base_path
         if name.startswith('/'):
@@ -146,7 +147,7 @@ class ModuleLoader:
         path = '/'.join(name.split('.'))
         return self.__base_path + '/' + path + '/'
 
-    def __load_resource(self, file_name):
+    def __load_resource(self, file_name: str):
         target_file = file_name.replace('.py', '') if file_name.endswith('.py') else file_name
         fix_path_arr = self.__path_fix(target_file).split('/')
         target_file = fix_path_arr[-2]
@@ -162,7 +163,7 @@ class ModuleLoader:
             del self.__context
             return resource
 
-    def __load_resources(self, pkg_name, excludes=None, recursive=False, type=None):
+    def __load_resources(self, pkg_name: str, excludes: Optional[Iterable[str]] = None, recursive: Optional[bool] = False, type=None):
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError('Not Found The Directory : {}'.format(target_dir))
