@@ -181,14 +181,15 @@ class ModuleLoader:
         fix_excludes = [exclude.replace('.py', '') for exclude in exclude_files]
         excluded_files = tuple(set(files) - set(fix_excludes))
         mods = []
+        decorator_attr = private.DECORATOR_ATTR
         for file in excluded_files:
             module = importlib.import_module(file)
             for mod_name, mod in inspect.getmembers(module, self.__context.predicate):
-                if hasattr(mod, private.DECORATOR_ATTR) and mod.load_flg:
+                if hasattr(mod, decorator_attr) and mod.load_flg:
                     mods.append(mod)
                     continue
                 if self.__context.draw_comparison(file) == mod_name.lower():
-                    if hasattr(mod, _DECORATOR_ATTR) and not mod.load_flg:
+                    if hasattr(mod, decorator_attr) and not mod.load_flg:
                         continue
                     mods.append(mod)
         if recursive is True:
