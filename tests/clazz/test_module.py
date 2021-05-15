@@ -5,6 +5,9 @@ class TestModule:
     def __str__(self):
         return self.classname
 
+    def __repr__(self):
+        return self.classname
+
     def __eq__(self, other):
         return self.classname == other.classname
 
