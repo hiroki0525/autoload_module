@@ -1,5 +1,6 @@
 import importlib
 import inspect
+from abc import ABC, abstractmethod
 from enum import Enum, auto
 from os import listdir
 from os import path as os_path
@@ -11,7 +12,8 @@ __all__ = "ModuleLoader"
 
 class __Private:
     """
-    Private namespace
+    Private namespace.
+    If you do not want to expose, define here as much as possible.
     """
 
     THIS_FILE = os_path.basename(__file__)
@@ -49,50 +51,72 @@ class __Private:
             return base_path[:-1]
         return base_path
 
-    class Context:
-        class LoadType(Enum):
-            func = auto()
-            clazz = auto()
-
-        def __init__(self, type):
-            self.__type = type
-            self.__predicate = (
-                inspect.isclass if type == self.LoadType.clazz else inspect.isfunction
-            )
-
-        @property
-        def predicate(self):
-            return self.__predicate
-
-        def draw_comparison(self, file):
-            return (
-                "".join(file.split("_")).lower()
-                if self.__type == self.LoadType.clazz
-                else file.lower()
-            )
-
 
 def _access_private():
     return __Private
 
 
+class _LoadType(Enum):
+    func = auto()
+    clazz = auto()
+
+
+class _Context(ABC):
+    @abstractmethod
+    def predicate(self):
+        raise Exception("'predicate' function is not defined.")
+
+    @abstractmethod
+    def draw_comparison(self, file: str):
+        raise Exception("'draw_comparison' function is not defined.")
+
+
+class _ClassContext(_Context):
+    def predicate(self):
+        return inspect.isclass
+
+    def draw_comparison(self, file: str):
+        return "".join(file.split("_")).lower()
+
+
+class _FunctionContext(_Context):
+    def predicate(self):
+        return inspect.isfunction
+
+    def draw_comparison(self, file: str):
+        return file.lower()
+
+
+class _ContextFactory:
+    __class_context = None
+    __function_context = None
+
+    @classmethod
+    def get(cls, load_type: _LoadType) -> _Context:
+        if load_type == _LoadType.clazz:
+            if cls.__class_context is None:
+                cls.__class_context = _ClassContext()
+            return cls.__class_context
+        if cls.__function_context is None:
+            cls.__function_context = _FunctionContext()
+        return cls.__function_context
+
+
 class ModuleLoader:
     def __init__(self, base_path: Optional[str] = None):
-        self.__base_path = _access_private().init_base_url(base_path)
-        self.__context = None
+        self.__base_path: str = _access_private().init_base_url(base_path)
+        self.__context: Optional[_Context] = None
 
     @property
     def base_path(self) -> str:
         return self.__base_path
 
     def load_class(self, file_name: str):
-        private = _access_private()
-        self.__context = private.Context(private.Context.LoadType.clazz)
+        self.__context = _ContextFactory.get(_LoadType.clazz)
         return self.__load_resource(file_name)
 
     def load_function(self, file_name: str) -> Callable:
-        private = _access_private()
-        self.__context = private.Context(private.Context.LoadType.func)
+        self.__context = _ContextFactory.get(_LoadType.func)
         return self.__load_resource(file_name)
 
     def load_classes(
@@ -101,12 +125,8 @@ class ModuleLoader:
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
     ):
-        private = _access_private()
-        type = private.Context.LoadType.clazz
-        self.__context = private.Context(type)
-        return self.__load_resources(
-            pkg_name, excludes=excludes, recursive=recursive, type=type
-        )
+        self.__context = _ContextFactory.get(_LoadType.clazz)
+        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
     def load_functions(
         self,
@@ -114,12 +134,8 @@ class ModuleLoader:
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
     ) -> Tuple[Callable]:
-        private = _access_private()
-        type = private.Context.LoadType.func
-        self.__context = private.Context(type)
-        return self.__load_resources(
-            pkg_name, excludes=excludes, recursive=recursive, type=type
-        )
+        self.__context = _ContextFactory.get(_LoadType.func)
+        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
     def __path_fix(self, name: str):
         if not name or name == "." or name == "/" or name == "./":
@@ -180,7 +196,9 @@ class ModuleLoader:
         target_path not in sys_path and sys_path.append(target_path)
         module = importlib.import_module(target_file)
         comparison = self.__context.draw_comparison(target_file)
-        for mod_name, resource in inspect.getmembers(module, self.__context.predicate):
+        for mod_name, resource in inspect.getmembers(
+            module, self.__context.predicate()
+        ):
             if (
                 hasattr(resource, _access_private().DECORATOR_ATTR)
                 and resource.load_flg
@@ -196,7 +214,6 @@ class ModuleLoader:
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
-        type=None,
     ) -> Tuple[Any]:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
@@ -223,7 +240,7 @@ class ModuleLoader:
         decorator_attr = private.DECORATOR_ATTR
         for file in excluded_files:
             module = importlib.import_module(file)
-            for mod_name, mod in inspect.getmembers(module, self.__context.predicate):
+            for mod_name, mod in inspect.getmembers(module, self.__context.predicate()):
                 if hasattr(mod, decorator_attr) and mod.load_flg:
                     mods.append(mod)
                     continue
@@ -246,7 +263,6 @@ class ModuleLoader:
                         fix_pkg_name + dir,
                         excludes=excludes,
                         recursive=recursive,
-                        type=type,
                     )
                     mods += recursive_mods
         has_order_mods = [
