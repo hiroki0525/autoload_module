@@ -1,0 +1,25 @@
+name: Publish python dev package
+
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches:
+      - develop
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install poetry And Publish
+        run: |
+          curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+          source $HOME/.poetry/env
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry publish -r testpypi --build
+        env:
+          POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_TOKEN }}
