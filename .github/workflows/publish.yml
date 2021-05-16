@@ -19,6 +19,7 @@ jobs:
       - name: Install poetry And Publish
         run: |
           curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+          source $HOME/.poetry/env
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry publish -r testpypi --build
         env:
