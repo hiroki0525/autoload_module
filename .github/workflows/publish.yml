@@ -23,4 +23,4 @@ jobs:
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry publish -r testpypi --build
         env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.TEST_PYPI_TOKEN }}
+          POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_TOKEN }}
