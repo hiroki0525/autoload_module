@@ -20,7 +20,7 @@ jobs:
         run: |
           curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
           source $HOME/.poetry/env
-          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry config repositories.testpypi https://test.pypi.org/legacy/ __token__
           poetry publish -r testpypi --build
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.TEST_PYPI_TOKEN }}
