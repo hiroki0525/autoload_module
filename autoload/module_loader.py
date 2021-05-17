@@ -195,10 +195,9 @@ class ModuleLoader:
         target_path = "/".join(fix_path_arr[:-2])
         target_path not in sys_path and sys_path.append(target_path)
         module = importlib.import_module(target_file)
-        comparison = self.__context.draw_comparison(target_file)
-        for mod_name, resource in inspect.getmembers(
-            module, self.__context.predicate()
-        ):
+        context = self.__context
+        comparison = context.draw_comparison(target_file)
+        for mod_name, resource in inspect.getmembers(module, context.predicate()):
             if (
                 hasattr(resource, _access_private().DECORATOR_ATTR)
                 and resource.load_flg
@@ -206,7 +205,7 @@ class ModuleLoader:
                 return resource
             if comparison != mod_name.lower():
                 continue
-            del self.__context
+            del context
             return resource
 
     def __load_resources(
@@ -235,20 +234,21 @@ class ModuleLoader:
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
         fix_excludes = [exclude.replace(".py", "") for exclude in exclude_files]
-        excluded_files = tuple(set(files) - set(fix_excludes))
+        excluded_files = set(files) - set(fix_excludes)
         mods: Union[List[Type], List[Callable]] = []
         decorator_attr = private.DECORATOR_ATTR
         for file in excluded_files:
             module = importlib.import_module(file)
-            for mod_name, mod in inspect.getmembers(module, self.__context.predicate()):
+            context = self.__context
+            for mod_name, mod in inspect.getmembers(module, context.predicate()):
                 if hasattr(mod, decorator_attr) and mod.load_flg:
                     mods.append(mod)
                     continue
-                if self.__context.draw_comparison(file) == mod_name.lower():
+                if context.draw_comparison(file) == mod_name.lower():
                     if hasattr(mod, decorator_attr) and not mod.load_flg:
                         continue
                     mods.append(mod)
-        if recursive is True:
+        if recursive:
             dirs = [
                 f
                 for f in listdir(target_dir)
