@@ -5,7 +5,7 @@ from enum import Enum, auto
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
-from typing import Any, Callable, Iterable, Optional, Tuple
+from typing import Callable, Iterable, List, Optional, Tuple, Type, Union
 
 __all__ = "ModuleLoader"
 
@@ -111,7 +111,7 @@ class ModuleLoader:
     def base_path(self) -> str:
         return self.__base_path
 
-    def load_class(self, file_name: str):
+    def load_class(self, file_name: str) -> Type:
         self.__context = _ContextFactory.get(_LoadType.clazz)
         return self.__load_resource(file_name)
 
@@ -124,7 +124,7 @@ class ModuleLoader:
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
-    ):
+    ) -> Tuple[Type]:
         self.__context = _ContextFactory.get(_LoadType.clazz)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
@@ -137,7 +137,7 @@ class ModuleLoader:
         self.__context = _ContextFactory.get(_LoadType.func)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
-    def __path_fix(self, name: str):
+    def __path_fix(self, name: str) -> str:
         if not name or name == "." or name == "/" or name == "./":
             return self.__base_path
         if name.startswith("/"):
@@ -186,7 +186,7 @@ class ModuleLoader:
         path = "/".join(name.split("."))
         return self.__base_path + "/" + path + "/"
 
-    def __load_resource(self, file_name: str):
+    def __load_resource(self, file_name: str) -> Union[Type, Callable]:
         target_file = (
             file_name.replace(".py", "") if file_name.endswith(".py") else file_name
         )
@@ -214,7 +214,7 @@ class ModuleLoader:
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
-    ) -> Tuple[Any]:
+    ) -> Union[Tuple[Type], Tuple[Callable]]:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError("Not Found The Directory : {}".format(target_dir))
@@ -236,7 +236,7 @@ class ModuleLoader:
                 exclude_files.append(exclude)
         fix_excludes = [exclude.replace(".py", "") for exclude in exclude_files]
         excluded_files = tuple(set(files) - set(fix_excludes))
-        mods = []
+        mods: Union[List[Type], List[Callable]] = []
         decorator_attr = private.DECORATOR_ATTR
         for file in excluded_files:
             module = importlib.import_module(file)
