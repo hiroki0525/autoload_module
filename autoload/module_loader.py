@@ -11,8 +11,7 @@ __all__ = "ModuleLoader"
 
 
 class __Private:
-    """
-    Private namespace.
+    """Private namespace.
     If you do not want to expose, define here as much as possible.
     """
 
@@ -104,6 +103,10 @@ class _ContextFactory:
 
 class ModuleLoader:
     def __init__(self, base_path: Optional[str] = None):
+        """initialize
+        :param base_path: Base path for import.
+            Defaults to the path where this object was initialized.
+        """
         self.__base_path: str = _access_private().init_base_url(base_path)
         self.__context: Optional[_Context] = None
 
@@ -112,10 +115,20 @@ class ModuleLoader:
         return self.__base_path
 
     def load_class(self, file_name: str) -> Type:
+        """Import Python module and return class.
+        :param file_name: Python file name (Module name).
+            You can input relative path like '../example' based on 'base_path'.
+        :return: class object defined in the Python file (Module) according to rules.
+        """
         self.__context = _ContextFactory.get(_LoadType.clazz)
         return self.__load_resource(file_name)
 
     def load_function(self, file_name: str) -> Callable:
+        """Import Python module and return function.
+        :param file_name: Python file name (module name).
+            You can input relative path like '../example' based on 'base_path'.
+        :return: function object defined in the Python file (Module) according to rules.
+        """
         self.__context = _ContextFactory.get(_LoadType.func)
         return self.__load_resource(file_name)
 
@@ -125,6 +138,13 @@ class ModuleLoader:
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
     ) -> Tuple[Type]:
+        """Import Python package and return classes.
+        :param pkg_name: Python package name (directory name).
+            You can input relative path like '../example' based on 'base_path'.
+        :param excludes: Python file names you don't want to import in the package.
+        :param recursive: If True, import Python package recursively.
+        :return: class objects defined in the Python package according to rules.
+        """
         self.__context = _ContextFactory.get(_LoadType.clazz)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
@@ -134,6 +154,13 @@ class ModuleLoader:
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
     ) -> Tuple[Callable]:
+        """Import Python package and return functions.
+        :param pkg_name: Python package name (directory name).
+            You can input relative path like '../example' based on 'base_path'.
+        :param excludes: Python file names you don't want to import in the package.
+        :param recursive: If True, import Python package recursively.
+        :return: function objects defined in the Python package according to rules.
+        """
         self.__context = _ContextFactory.get(_LoadType.func)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
