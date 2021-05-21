@@ -1,4 +1,4 @@
-FROM python:3.8-alpine
+FROM python:3.7.10-alpine
 COPY tests/main.py .
 COPY tests/ tests
 RUN pip install -U pip \
