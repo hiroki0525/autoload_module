@@ -1,4 +1,9 @@
 # autoload_module
+<a href="https://pypi.org/project/autoload-module" target="_blank">
+    <img src="https://img.shields.io/pypi/v/autoload-module?color=%2334D058&label=pypi%20package" alt="autoload-module version">
+</a>
+<img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat" alt="MIT License image">
+
 This library will give you comfortable Python metaprogramming.  
 The following is a plain example.
 
