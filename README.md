@@ -1,10 +1,7 @@
 # autoload_module
-<a href="https://pypi.org/project/autoload-module" target="_blank">
-    <img src="https://img.shields.io/pypi/v/autoload-module?color=%2334D058&label=pypi%20package" alt="autoload-module version">
-</a>
-
+[![PyPI version](https://badge.fury.io/py/autoload-module.svg)](https://badge.fury.io/py/autoload-module)
 [![Test](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml/badge.svg)](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml)
-
+<img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat" alt="MIT License image">
 
 This library will give you comfortable Python metaprogramming.  
 The following is a plain example.
