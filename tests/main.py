@@ -3,7 +3,7 @@ This is test file.
 You should run this in Docker container.
 """
 
-from autoload.module_loader import ModuleLoader
+from autoload import ModuleLoader
 
 
 def main():

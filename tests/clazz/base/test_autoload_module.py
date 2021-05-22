@@ -9,7 +9,7 @@ from tests.clazz.base.packageD.module_d3 import ModuleD6
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
-from autoload.module_loader import ModuleLoader
+from autoload import ModuleLoader
 from tests.clazz.base.module_1 import Module1
 from tests.clazz.base.module_2 import Module2
 from tests.clazz.base.module_3 import Module3

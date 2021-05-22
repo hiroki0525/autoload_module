@@ -12,7 +12,7 @@ project/
 ```
 - example.py
 ```python
-from autoload.module_loader import ModuleLoader
+from autoload import ModuleLoader
 
 input = "foo bar baz"
 loader = ModuleLoader()
@@ -47,7 +47,7 @@ ModuleLoader([base_path])
 ```
 - example.py
 ```python
-from autoload.module_loader import ModuleLoader
+from autoload import ModuleLoader
 
 # loaderの内部的で '/usr/local/src/project/' が保持されます
 loader = ModuleLoader()
@@ -110,7 +110,7 @@ validator_classes = loader.load_classes("main", ["validator_a", "validator_b"])
 # -> validateC!!
 
 # Pattern2: 'load_config'
-from autoload.decorator import load_config
+from autoload import load_config
 
 @load_config(load=False)
 class ValidatorA:
@@ -161,7 +161,7 @@ load_functions(pkg_name, [excludes])
 クラス名や関数名をカスタマイズしたい場合は, `@load_config` デコレータで `load=True` を指定してください。
     - validator_a.py
     ```python
-    from autoload.decorator import load_config
+    from autoload import load_config
   
     @load_config(load=True)
     class CustomValidator:
@@ -171,7 +171,7 @@ load_functions(pkg_name, [excludes])
 - 返却されるクラスオブジェクトに順番を持たせたいなら、同じく `@load_config` デコレータを使ってください。
     - validator_a.py
     ```python
-    from autoload.decorator import load_config
+    from autoload import load_config
   
     # 昇順でソートされます
     @load_config(order=1)

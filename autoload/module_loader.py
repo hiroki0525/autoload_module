@@ -1,11 +1,11 @@
-import importlib
 import inspect
 from abc import ABC, abstractmethod
 from enum import Enum, auto
+from importlib import import_module
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
-from typing import Callable, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
 
 __all__ = "ModuleLoader"
 
@@ -20,7 +20,7 @@ class __Private:
         "__init__.py",
         THIS_FILE,
     )
-    DECORATOR_ATTR = "load_flg"
+    DECORATOR_ATTR = "_load_flg"
     EXCLUDE_DIRS = {
         "__pycache__",
     }
@@ -87,8 +87,8 @@ class _FunctionContext(_Context):
 
 
 class _ContextFactory:
-    __class_context = None
-    __function_context = None
+    __class_context: Optional[_ClassContext] = None
+    __function_context: Optional[_FunctionContext] = None
 
     @classmethod
     def get(cls, load_type: _LoadType) -> _Context:
@@ -101,6 +101,9 @@ class _ContextFactory:
         return cls.__function_context
 
 
+_T = TypeVar("_T", Type[Any], Callable)
+
+
 class ModuleLoader:
     def __init__(self, base_path: Optional[str] = None):
         """initialize
@@ -108,7 +111,7 @@ class ModuleLoader:
             Defaults to the path where this object was initialized.
         """
         self.__base_path: str = _access_private().init_base_url(base_path)
-        self.__context: Optional[_Context] = None
+        self.__context: _Context = _ContextFactory.get(_LoadType.clazz)
 
     @property
     def base_path(self) -> str:
@@ -213,26 +216,26 @@ class ModuleLoader:
         path = "/".join(name.split("."))
         return self.__base_path + "/" + path + "/"
 
-    def __load_resource(self, file_name: str) -> Union[Type, Callable]:
+    def __load_resource(self, file_name: str) -> _T:
         target_file = (
             file_name.replace(".py", "") if file_name.endswith(".py") else file_name
         )
         fix_path_arr = self.__path_fix(target_file).split("/")
         target_file = fix_path_arr[-2]
         target_path = "/".join(fix_path_arr[:-2])
-        target_path not in sys_path and sys_path.append(target_path)
-        module = importlib.import_module(target_file)
+        if target_path not in sys_path:
+            sys_path.append(target_path)
+        module = import_module(target_file)
         context = self.__context
         comparison = context.draw_comparison(target_file)
         for mod_name, resource in inspect.getmembers(module, context.predicate()):
             if (
                 hasattr(resource, _access_private().DECORATOR_ATTR)
-                and resource.load_flg
+                and resource._load_flg
             ):
                 return resource
             if comparison != mod_name.lower():
                 continue
-            del context
             return resource
 
     def __load_resources(
@@ -240,11 +243,12 @@ class ModuleLoader:
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
         recursive: Optional[bool] = False,
-    ) -> Union[Tuple[Type], Tuple[Callable]]:
+    ) -> Tuple[_T]:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
             raise NotADirectoryError("Not Found The Directory : {}".format(target_dir))
-        target_dir not in sys_path and sys_path.append(target_dir)
+        if target_dir not in sys_path:
+            sys_path.append(target_dir)
         files = [
             os_path.splitext(file)[0]
             for file in listdir(target_dir)
@@ -262,17 +266,17 @@ class ModuleLoader:
                 exclude_files.append(exclude)
         fix_excludes = [exclude.replace(".py", "") for exclude in exclude_files]
         excluded_files = set(files) - set(fix_excludes)
-        mods: Union[List[Type], List[Callable]] = []
+        mods: List[_T] = []
         decorator_attr = private.DECORATOR_ATTR
         for file in excluded_files:
-            module = importlib.import_module(file)
+            module = import_module(file)
             context = self.__context
             for mod_name, mod in inspect.getmembers(module, context.predicate()):
-                if hasattr(mod, decorator_attr) and mod.load_flg:
+                if hasattr(mod, decorator_attr) and mod._load_flg:
                     mods.append(mod)
                     continue
                 if context.draw_comparison(file) == mod_name.lower():
-                    if hasattr(mod, decorator_attr) and not mod.load_flg:
+                    if hasattr(mod, decorator_attr) and not mod._load_flg:
                         continue
                     mods.append(mod)
         if recursive:
@@ -293,16 +297,18 @@ class ModuleLoader:
                     )
                     mods += recursive_mods
         has_order_mods = [
-            mod for mod in mods if hasattr(mod, "load_order") and mod.load_order
+            mod for mod in mods if hasattr(mod, "_load_order") and mod._load_order
         ]
         if not has_order_mods:
             return tuple(mods)
         no_has_order_mods = [
-            mod for mod in mods if not hasattr(mod, "load_order") or not mod.load_order
+            mod
+            for mod in mods
+            if not hasattr(mod, "_load_order") or not mod._load_order
         ]
         if not no_has_order_mods:
-            return tuple(sorted(has_order_mods, key=lambda mod: mod.load_order))
+            return tuple(sorted(has_order_mods, key=lambda mod: mod._load_order))
         ordered_mods = (
-            sorted(has_order_mods, key=lambda mod: mod.load_order) + no_has_order_mods
+            sorted(has_order_mods, key=lambda mod: mod._load_order) + no_has_order_mods
         )
         return tuple(ordered_mods)
