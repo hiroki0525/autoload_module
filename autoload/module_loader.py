@@ -247,7 +247,7 @@ class ModuleLoader:
                 and resource._load_flg
             ):
                 return resource
-            if comparison != mod_name.lower():
+            if comparison != mod_name:
                 continue
             return resource
 
@@ -259,7 +259,7 @@ class ModuleLoader:
     ) -> Tuple[_T]:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
-            raise NotADirectoryError("Not Found The Directory : {}".format(target_dir))
+            raise NotADirectoryError(f"Not Found The Directory : {target_dir}")
         if target_dir not in sys_path:
             sys_path.append(target_dir)
         files = [
@@ -293,20 +293,22 @@ class ModuleLoader:
                 if hasattr(mod, decorator_attr):
                     if not mod._load_flg:
                         continue
+                    if is_found:
+                        raise LoaderStrictModeError(
+                            f"Loader can load a {load_type_name} per a module."
+                            f"\nPlease check '{mod_name}' in {file}."
+                        )
                     if is_strict and not is_name_match:
                         raise LoaderStrictModeError(
-                            f"Loader can't load {mod_name}."
+                            f"Loader can't load '{mod_name}' in {file}."
                             f"\nPlease rename '{target_load_name}' {load_type_name}."
                         )
                     mods.append(mod)
+                    if is_strict:
+                        is_found = True
                     continue
                 if not is_name_match:
                     continue
-                if is_found:
-                    raise LoaderStrictModeError(
-                        f"Loader can load a {load_type_name} per a module."
-                        f"\nPlease check {mod_name}."
-                    )
                 mods.append(mod)
                 if is_strict:
                     is_found = True
