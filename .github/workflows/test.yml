@@ -21,6 +21,4 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Run Test
-        run: |
-          python ./tests/clazz/base/test_autoload_module.py
-          python ./tests/func/base/test_autoload_module.py
+        run: python -m unittest -v
