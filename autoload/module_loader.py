@@ -20,7 +20,7 @@ class __Private:
         "__init__.py",
         THIS_FILE,
     )
-    DECORATOR_ATTR = "load_flg"
+    DECORATOR_ATTR = "_load_flg"
     EXCLUDE_DIRS = {
         "__pycache__",
     }
@@ -231,7 +231,7 @@ class ModuleLoader:
         for mod_name, resource in inspect.getmembers(module, context.predicate()):
             if (
                 hasattr(resource, _access_private().DECORATOR_ATTR)
-                and resource.load_flg
+                and resource._load_flg
             ):
                 return resource
             if comparison != mod_name.lower():
@@ -272,11 +272,11 @@ class ModuleLoader:
             module = import_module(file)
             context = self.__context
             for mod_name, mod in inspect.getmembers(module, context.predicate()):
-                if hasattr(mod, decorator_attr) and mod.load_flg:
+                if hasattr(mod, decorator_attr) and mod._load_flg:
                     mods.append(mod)
                     continue
                 if context.draw_comparison(file) == mod_name.lower():
-                    if hasattr(mod, decorator_attr) and not mod.load_flg:
+                    if hasattr(mod, decorator_attr) and not mod._load_flg:
                         continue
                     mods.append(mod)
         if recursive:
