@@ -1,7 +1,7 @@
-import importlib
 import inspect
 from abc import ABC, abstractmethod
 from enum import Enum, auto
+from importlib import import_module
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
@@ -87,8 +87,8 @@ class _FunctionContext(_Context):
 
 
 class _ContextFactory:
-    __class_context = None
-    __function_context = None
+    __class_context: Optional[_ClassContext] = None
+    __function_context: Optional[_FunctionContext] = None
 
     @classmethod
     def get(cls, load_type: _LoadType) -> _Context:
@@ -225,7 +225,7 @@ class ModuleLoader:
         target_path = "/".join(fix_path_arr[:-2])
         if target_path not in sys_path:
             sys_path.append(target_path)
-        module = importlib.import_module(target_file)
+        module = import_module(target_file)
         context = self.__context
         comparison = context.draw_comparison(target_file)
         for mod_name, resource in inspect.getmembers(module, context.predicate()):
@@ -269,7 +269,7 @@ class ModuleLoader:
         mods: List[_T] = []
         decorator_attr = private.DECORATOR_ATTR
         for file in excluded_files:
-            module = importlib.import_module(file)
+            module = import_module(file)
             context = self.__context
             for mod_name, mod in inspect.getmembers(module, context.predicate()):
                 if hasattr(mod, decorator_attr) and mod.load_flg:
