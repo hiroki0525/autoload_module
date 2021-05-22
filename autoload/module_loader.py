@@ -1,11 +1,13 @@
 import inspect
 from abc import ABC, abstractmethod
-from enum import Enum, auto
+from enum import Enum
 from importlib import import_module
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
 from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
+
+from autoload.exception import LoaderStrictModeError
 
 __all__ = "ModuleLoader"
 
@@ -56,11 +58,18 @@ def _access_private():
 
 
 class _LoadType(Enum):
-    func = auto()
-    clazz = auto()
+    func = "function"
+    clazz = "class"
 
 
 class _Context(ABC):
+    def __init__(self, load_type: _LoadType):
+        self.__load_type = load_type
+
+    @property
+    def load_type(self):
+        return self.__load_type
+
     @abstractmethod
     def predicate(self):
         raise Exception("'predicate' function is not defined.")
@@ -75,7 +84,7 @@ class _ClassContext(_Context):
         return inspect.isclass
 
     def draw_comparison(self, file: str):
-        return "".join(file.split("_")).lower()
+        return "".join([s.capitalize() for s in file.split("_")])
 
 
 class _FunctionContext(_Context):
@@ -94,10 +103,10 @@ class _ContextFactory:
     def get(cls, load_type: _LoadType) -> _Context:
         if load_type == _LoadType.clazz:
             if cls.__class_context is None:
-                cls.__class_context = _ClassContext()
+                cls.__class_context = _ClassContext(load_type)
             return cls.__class_context
         if cls.__function_context is None:
-            cls.__function_context = _FunctionContext()
+            cls.__function_context = _FunctionContext(load_type)
         return cls.__function_context
 
 
@@ -105,13 +114,17 @@ _T = TypeVar("_T", Type[Any], Callable)
 
 
 class ModuleLoader:
-    def __init__(self, base_path: Optional[str] = None):
+    def __init__(self, base_path: Optional[str] = None, strict: bool = False):
         """initialize
         :param base_path: Base path for import.
             Defaults to the path where this object was initialized.
+        :param strict: If strict is True,
+            ModuleLoader strictly try to load a class or function object
+            per a Python module on a basis of its name.
         """
         self.__base_path: str = _access_private().init_base_url(base_path)
         self.__context: _Context = _ContextFactory.get(_LoadType.clazz)
+        self.__strict: bool = strict
 
     @property
     def base_path(self) -> str:
@@ -268,17 +281,35 @@ class ModuleLoader:
         excluded_files = set(files) - set(fix_excludes)
         mods: List[_T] = []
         decorator_attr = private.DECORATOR_ATTR
+        context = self.__context
+        is_strict = self.__strict
+        load_type_name = context.load_type.value
         for file in excluded_files:
             module = import_module(file)
-            context = self.__context
+            target_load_name = context.draw_comparison(file)
+            is_found = False
             for mod_name, mod in inspect.getmembers(module, context.predicate()):
-                if hasattr(mod, decorator_attr) and mod._load_flg:
+                is_name_match = target_load_name == mod_name
+                if hasattr(mod, decorator_attr):
+                    if not mod._load_flg:
+                        continue
+                    if is_strict and not is_name_match:
+                        raise LoaderStrictModeError(
+                            f"Loader can't load {mod_name}."
+                            f"\nPlease rename '{target_load_name}' {load_type_name}."
+                        )
                     mods.append(mod)
                     continue
-                if context.draw_comparison(file) == mod_name.lower():
-                    if hasattr(mod, decorator_attr) and not mod._load_flg:
-                        continue
-                    mods.append(mod)
+                if not is_name_match:
+                    continue
+                if is_found:
+                    raise LoaderStrictModeError(
+                        f"Loader can load a {load_type_name} per a module."
+                        f"\nPlease check {mod_name}."
+                    )
+                mods.append(mod)
+                if is_strict:
+                    is_found = True
         if recursive:
             dirs = [
                 f
