@@ -1,4 +1,4 @@
-from autoload.decorator import load_config
+from autoload import load_config
 
 from tests.clazz.test_module import TestModule
 

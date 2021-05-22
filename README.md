@@ -18,7 +18,7 @@ project/
 ```
 - example.py
 ```python
-from autoload.module_loader import ModuleLoader
+from autoload import ModuleLoader
 
 input = "foo bar baz"
 loader = ModuleLoader()
@@ -54,7 +54,7 @@ it was initialized.
 ```
 - example.py
 ```python
-from autoload.module_loader import ModuleLoader
+from autoload import ModuleLoader
 
 # The instance has '/usr/local/src/project/'
 loader = ModuleLoader()
@@ -118,7 +118,7 @@ validator_classes = loader.load_classes("main", ["validator_a"])
 # -> validateC!!
 
 # Pattern2: 'load_config'
-from autoload.decorator import load_config
+from autoload import load_config
 
 @load_config(load=False)
 class ValidatorA:
@@ -169,7 +169,7 @@ For example, if you named the file `test_module.py`, you must name the class `Te
 When you want to customize their name, use `@load_config` decorator.
     - validator_a.py
     ```python
-    from autoload.decorator import load_config
+    from autoload import load_config
   
     @load_config()
     class CustomValidator:
@@ -179,7 +179,7 @@ When you want to customize their name, use `@load_config` decorator.
 - You can also control the order of loaded class objects using `@load_config` decorator.
     - validator_a.py
     ```python
-    from autoload.decorator import load_config
+    from autoload import load_config
   
     # sort in ascending order
     @load_config(order=1)
