@@ -189,9 +189,8 @@ class ModuleLoader:
         context = self.__context
         comparison = context.draw_comparison(target_file)
         for mod_name, resource in inspect.getmembers(module, context.predicate()):
-            if (
-                hasattr(resource, _access_private().DECORATOR_ATTR)
-                and resource._load_flg
+            if hasattr(resource, _access_private().DECORATOR_ATTR) and getattr(
+                resource, "_load_flg"
             ):
                 return resource
             if comparison != mod_name:
@@ -240,7 +239,7 @@ class ModuleLoader:
             for mod_name, mod in members:
                 is_name_match = target_load_name == mod_name
                 if hasattr(mod, decorator_attr):
-                    if not mod._load_flg:
+                    if not getattr(mod, "_load_flg"):
                         continue
                     if is_found:
                         # High priority error
@@ -300,18 +299,23 @@ class ModuleLoader:
                     )
                     mods += recursive_mods
         has_order_mods = [
-            mod for mod in mods if hasattr(mod, "_load_order") and mod._load_order
+            mod
+            for mod in mods
+            if hasattr(mod, "_load_order") and getattr(mod, "_load_order")
         ]
         if not has_order_mods:
             return tuple(mods)
         no_has_order_mods = [
             mod
             for mod in mods
-            if not hasattr(mod, "_load_order") or not mod._load_order
+            if not hasattr(mod, "_load_order") or not getattr(mod, "_load_order")
         ]
         if not no_has_order_mods:
-            return tuple(sorted(has_order_mods, key=lambda mod: mod._load_order))
+            return tuple(
+                sorted(has_order_mods, key=lambda m: getattr(m, "_load_order"))
+            )
         ordered_mods = (
-            sorted(has_order_mods, key=lambda mod: mod._load_order) + no_has_order_mods
+            sorted(has_order_mods, key=lambda m: getattr(m, "_load_order"))
+            + no_has_order_mods
         )
         return tuple(ordered_mods)
