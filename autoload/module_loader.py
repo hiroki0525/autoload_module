@@ -1,13 +1,13 @@
 import inspect
-from abc import ABC, abstractmethod
-from enum import Enum
 from importlib import import_module
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
 from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
 
-from autoload.exception import LoaderStrictModeError
+from ._context import Context, ContextFactory
+from ._globals import LoadType
+from .exception import LoaderStrictModeError
 
 __all__ = "ModuleLoader"
 
@@ -57,59 +57,6 @@ def _access_private():
     return __Private
 
 
-class _LoadType(Enum):
-    func = "function"
-    clazz = "class"
-
-
-class _Context(ABC):
-    def __init__(self, load_type: _LoadType):
-        self.__load_type = load_type
-
-    @property
-    def load_type(self):
-        return self.__load_type
-
-    @abstractmethod
-    def predicate(self):
-        raise Exception("'predicate' function is not defined.")
-
-    @abstractmethod
-    def draw_comparison(self, file: str):
-        raise Exception("'draw_comparison' function is not defined.")
-
-
-class _ClassContext(_Context):
-    def predicate(self):
-        return inspect.isclass
-
-    def draw_comparison(self, file: str):
-        return "".join([s.capitalize() for s in file.split("_")])
-
-
-class _FunctionContext(_Context):
-    def predicate(self):
-        return inspect.isfunction
-
-    def draw_comparison(self, file: str):
-        return file.lower()
-
-
-class _ContextFactory:
-    __class_context: Optional[_ClassContext] = None
-    __function_context: Optional[_FunctionContext] = None
-
-    @classmethod
-    def get(cls, load_type: _LoadType) -> _Context:
-        if load_type == _LoadType.clazz:
-            if cls.__class_context is None:
-                cls.__class_context = _ClassContext(load_type)
-            return cls.__class_context
-        if cls.__function_context is None:
-            cls.__function_context = _FunctionContext(load_type)
-        return cls.__function_context
-
-
 _T = TypeVar("_T", Type[Any], Callable)
 
 
@@ -123,7 +70,7 @@ class ModuleLoader:
             per a Python module on a basis of its name.
         """
         self.__base_path: str = _access_private().init_base_url(base_path)
-        self.__context: _Context = _ContextFactory.get(_LoadType.clazz)
+        self.__context: Context = ContextFactory.get(LoadType.clazz)
         self.__strict: bool = strict
 
     @property
@@ -136,7 +83,7 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: class object defined in the Python file (Module) according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.clazz)
+        self.__context = ContextFactory.get(LoadType.clazz)
         return self.__load_resource(file_name)
 
     def load_function(self, file_name: str) -> Callable:
@@ -145,7 +92,7 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: function object defined in the Python file (Module) according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.func)
+        self.__context = ContextFactory.get(LoadType.func)
         return self.__load_resource(file_name)
 
     def load_classes(
@@ -161,7 +108,7 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.clazz)
+        self.__context = ContextFactory.get(LoadType.clazz)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
     def load_functions(
@@ -177,7 +124,7 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: function objects defined in the Python package according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.func)
+        self.__context = ContextFactory.get(LoadType.func)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
     def __path_fix(self, name: str) -> str:
