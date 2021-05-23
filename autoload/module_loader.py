@@ -288,30 +288,53 @@ class ModuleLoader:
             module = import_module(file)
             target_load_name = context.draw_comparison(file)
             is_found = False
-            for mod_name, mod in inspect.getmembers(module, context.predicate()):
+            error = None
+            members = inspect.getmembers(module, context.predicate())
+            for mod_name, mod in members:
                 is_name_match = target_load_name == mod_name
                 if hasattr(mod, decorator_attr):
                     if not mod._load_flg:
                         continue
                     if is_found:
-                        raise LoaderStrictModeError(
-                            f"Loader can load a {load_type_name} per a module."
-                            f"\nPlease check '{mod_name}' in {file}."
+                        # High priority error
+                        error = LoaderStrictModeError(
+                            f"Loader can only load a "
+                            f"'{target_load_name}' {load_type_name} in {file} module."
+                            f"\nPlease check '{mod_name}' in {file} module."
                         )
+                        break
                     if is_strict and not is_name_match:
-                        raise LoaderStrictModeError(
-                            f"Loader can't load '{mod_name}' in {file}."
+                        error = LoaderStrictModeError(
+                            f"Loader can't load '{mod_name}' in {file} module."
                             f"\nPlease rename '{target_load_name}' {load_type_name}."
                         )
+                        continue
                     mods.append(mod)
                     if is_strict:
+                        if error:
+                            # High priority error
+                            error = LoaderStrictModeError(
+                                f"Loader can only load a "
+                                f"'{target_load_name}' {load_type_name} "
+                                f"in {file} module."
+                            )
+                            break
                         is_found = True
                     continue
                 if not is_name_match:
                     continue
                 mods.append(mod)
                 if is_strict:
+                    if error:
+                        # High priority error
+                        error = LoaderStrictModeError(
+                            f"Loader can only load a "
+                            f"'{target_load_name}' {load_type_name} in {file} module."
+                        )
+                        break
                     is_found = True
+            if error is not None:
+                raise error
         if recursive:
             dirs = [
                 f

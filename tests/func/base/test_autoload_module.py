@@ -2,26 +2,27 @@ import sys
 import unittest
 from pathlib import Path
 
-from tests.func.base.packageD.packageD_func1 import multiple2, multiple1, multiple3
-from tests.func.base.packageD.packageD_func2 import multiple4, multiple5
-from tests.func.base.packageD.packageD_func3 import packageD_func3
+from tests.func.base.packageD.package_d_func1 import multiple2, multiple3, package_d_func1
+from tests.func.base.packageD.package_d_func2 import multiple4, multiple5
+from tests.func.base.packageD.package_d_func3 import package_d_func3
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
 from autoload import ModuleLoader
+from autoload.exception import LoaderStrictModeError
 from tests.func.base.func1 import func1
 from tests.func.base.func2 import func2
 from tests.func.base.func3 import func3
-from tests.func.base.packageC.packageC_func1 import packageC_func1
-from tests.func.base.packageC.packageC_func2 import packageC_func2
-from tests.func.base.packageC.packageC_func3 import packageC_func3
-from tests.func.packageA.packageA_func1 import packageA_func1
-from tests.func.packageA.packageA_func3 import packageA_func3
-from tests.func.packageA.packageA_func2 import packageA_func2
-from tests.func.packageA.packageB.packageB_func1 import packageB_func1
-from tests.func.packageA.packageB.packageB_func2 import packageB_func2
-from tests.func.packageA.packageB.packageB_func3 import packageB_func3
+from tests.func.base.packageC.package_c_func1 import package_c_func1
+from tests.func.base.packageC.package_c_func2 import package_c_func2
+from tests.func.base.packageC.package_c_func3 import package_c_func3
+from tests.func.packageA.package_a_func1 import package_a_func1
+from tests.func.packageA.package_a_func3 import package_a_func3
+from tests.func.packageA.package_a_func2 import package_a_func2
+from tests.func.packageA.packageB.package_b_func1 import package_b_func1
+from tests.func.packageA.packageB.package_b_func2 import package_b_func2
+from tests.func.packageA.packageB.package_b_func3 import package_b_func3
 
 
 class TestAutoLoadModule(unittest.TestCase):
@@ -32,15 +33,15 @@ class TestAutoLoadModule(unittest.TestCase):
 
     def test_load_function(self):
         result_1 = func1()
-        result_A_1 = packageA_func1()
-        result_B_1 = packageB_func1()
-        result_C_1 = packageC_func1()
+        result_A_1 = package_a_func1()
+        result_B_1 = package_b_func1()
+        result_C_1 = package_c_func1()
         # Importing path test runs on class base test.
         test_cases = (
             ("func1", result_1),
-            ("..packageA.packageA_func1", result_A_1),
-            ("../packageA/packageB/packageB_func1", result_B_1),
-            ("/packageC/packageC_func1", result_C_1),
+            ("..packageA.package_a_func1", result_A_1),
+            ("../packageA/packageB/package_b_func1", result_B_1),
+            ("/packageC/package_c_func1", result_C_1),
         )
         for file_name, expected in test_cases:
             with self.subTest(file_name=file_name):
@@ -62,7 +63,7 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertSetEqual(results, expected)
 
     def test_load_functions_complex_path_load(self):
-        pkgB_result = {packageB_func3(), packageB_func2(), packageB_func1()}
+        pkgB_result = {package_b_func3(), package_b_func2(), package_b_func1()}
         test_cases = (
             ("../packageA/packageB", None, pkgB_result),
         )
@@ -74,7 +75,7 @@ class TestAutoLoadModule(unittest.TestCase):
 
     def test_load_functions_partial_order(self):
         # Only ModuleA1 has order.
-        pkgA_result = (packageA_func2(), packageA_func3(), packageA_func1())
+        pkgA_result = (package_a_func2(), package_a_func3(), package_a_func1())
         test_cases = (
             ("../packageA/", None, pkgA_result),
         )
@@ -100,10 +101,10 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertSetEqual(results, expected)
 
     def test_load_functions_order(self):
-        pkgC_result = (packageC_func3(), packageC_func2(), packageC_func1())
+        pkgC_result = (package_c_func3(), package_c_func2(), package_c_func1())
         test_cases = (
             ("packageC", [], pkgC_result),
-            ("packageC", ["packageC_func2"], (packageC_func3(), packageC_func1())),
+            ("packageC", ["package_c_func2"], (package_c_func3(), package_c_func1())),
         )
         for pkg_name, exclude, expected in test_cases:
             with self.subTest(pkg_name=pkg_name, exclude=exclude):
@@ -122,8 +123,8 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.loader.load_functions(pkg_name, exclude)
 
     def test_load_functions_recursive(self):
-        pkgA_result = {packageA_func2(), packageA_func3(), packageA_func1()}
-        pkgB_result = {packageB_func3(), packageB_func2(), packageB_func1()}
+        pkgA_result = {package_a_func2(), package_a_func3(), package_a_func1()}
+        pkgB_result = {package_b_func3(), package_b_func2(), package_b_func1()}
         test_cases = (
             ("../packageA", False, pkgA_result),
             # expected packageA is ordered, B is random.
@@ -136,7 +137,7 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertSetEqual(instances, expected)
 
     def test_load_multiple_functions(self):
-        basepkg_result = {multiple2(), multiple1(), multiple3(), multiple4(), multiple5(), packageD_func3()}
+        basepkg_result = {package_d_func1(), multiple2(), multiple3(), multiple4(), multiple5(), package_d_func3()}
         test_cases = (
             ("packageD", None, basepkg_result),
         )
@@ -145,6 +146,29 @@ class TestAutoLoadModule(unittest.TestCase):
                 functions = self.loader.load_functions(pkg_name, exclude)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
+
+    def test_strict_mode(self):
+        self.loader = ModuleLoader(strict=True)
+        self.test_load_functions_exclude()
+        self.test_load_functions_partial_order()
+        self.test_load_functions_no_order()
+        self.test_load_functions_order()
+
+    def test_strict_mode_raise_error(self):
+        self.loader = ModuleLoader(strict=True)
+        test_cases = (
+            "packageD",
+            # 'load_classes' will be able to load not only package but also module.
+            # "packageD.module_d1"
+        )
+        for pkg_name in test_cases:
+            with self.assertRaises(LoaderStrictModeError):
+                try:
+                    self.loader.load_functions(pkg_name)
+                except LoaderStrictModeError as e:
+                    # check message
+                    print(e)
+                    raise e
 
 
 if __name__ == '__main__':
