@@ -5,6 +5,7 @@ on:
     types: [opened, reopened]
     branches:
       - develop
+      - master
 
 jobs:
   test:
