@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autoload-module"
-version = "1.3.2"
+version = "1.3.3"
 description = "Python Autoload Module"
 authors = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
 license = "MIT"
@@ -37,3 +37,6 @@ pre-commit = "^2.12.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
