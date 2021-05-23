@@ -99,7 +99,7 @@ class ModuleLoader:
         self,
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
-        recursive: Optional[bool] = False,
+        recursive: bool = False,
     ) -> Tuple[Type]:
         """Import Python package and return classes.
         :param pkg_name: Python package name (directory name).
@@ -115,7 +115,7 @@ class ModuleLoader:
         self,
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
-        recursive: Optional[bool] = False,
+        recursive: bool = False,
     ) -> Tuple[Callable]:
         """Import Python package and return functions.
         :param pkg_name: Python package name (directory name).
