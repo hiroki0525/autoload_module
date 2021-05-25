@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autoload-module"
-version = "1.3.3.1"
+version = "1.4.0"
 description = "Python Autoload Module"
 authors = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
 license = "MIT"
