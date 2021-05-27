@@ -8,6 +8,7 @@ from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from ._context import Context, ContextFactory
 from ._globals import LoadType
+from ._import import ImportableFactory
 from .exception import LoaderStrictModeError
 
 __all__ = "ModuleLoader"
@@ -221,15 +222,6 @@ class ModuleLoader:
         recursive: Optional[bool] = False,
     ) -> Tuple[_T]:
         target_dir = self.__path_fix(pkg_name)
-        if not os_path.isdir(target_dir):
-            raise NotADirectoryError(f"Not Found The Directory : {target_dir}")
-        if target_dir not in sys_path:
-            sys_path.append(target_dir)
-        files = [
-            os_path.splitext(file)[0]
-            for file in listdir(target_dir)
-            if file.endswith(".py")
-        ]
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
         exclude_files.append(os_path.basename(private.detect_call_path()))
@@ -240,14 +232,13 @@ class ModuleLoader:
                 if not isinstance(exclude, str):
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
-        fix_excludes = [exclude.replace(".py", "") for exclude in exclude_files]
-        excluded_files = set(files) - set(fix_excludes)
+        importable = ImportableFactory.get(target_dir, recursive, excludes)
         mods: List[_T] = []
         decorator_attr = private.DECORATOR_ATTR
         context = self.__context
         is_strict = self.__strict
         load_type_name = context.load_type.value
-        for file in excluded_files:
+        for file in importable.get_children_files():
             module = import_module(file)
             target_load_name = context.draw_comparison(file)
             is_found = False
