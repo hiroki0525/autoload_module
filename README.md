@@ -37,7 +37,10 @@ pip install autoload-module
 ## Usage
 ### Constructor
 ```
-ModuleLoader([base_path])
+ModuleLoader(
+  base_path: Optional[str] = None,
+  strict: bool = False
+)
 ```
 The ModuleLoader can be generated with no parameters.
 In that case, the instance has the absolute path where
@@ -65,10 +68,17 @@ If you want to change the base path, you must generate the ModuleLoader with an 
 ```python
 loader = ModuleLoader('/user/local/src/custom')
 ```
+
+About strict parameter, please see [here](#NOTE) .
+
 ### Methods
 #### load_classes
 ```
-load_classes(pkg_name, [excludes, recursive])
+load_classes(
+    pkg_name: str,
+    excludes: Optional[Iterable[str]] = None,
+    recursive: bool = False,
+) -> Tuple[Type]:
 ```
 This method read the Python package and return the tuple of class objects.
 - Directory
@@ -157,12 +167,16 @@ loader.load_classes("..otherpkg")
 
 #### load_functions
 ```
-load_functions(pkg_name, [excludes, recursive])
+load_functions(
+    pkg_name: str,
+    excludes: Optional[Iterable[str]] = None,
+    recursive: bool = False,
+) -> Tuple[Callable]:
 ```
 This method read the Python package and return the tuple of functions.
 The usage is the same as `load_classes`.
 
-**NOTE**
+##### NOTE
 - To search class or function, **You must match the name of file, and the one of class or function.**
 For example, if you named the file `test_module.py`, you must name the class `TestModule` or the function `test_module`.
 When you want to customize their name, use `@load_config` decorator.
@@ -186,9 +200,45 @@ When you want to customize their name, use `@load_config` decorator.
         def validate(self):
             print("validateA!!")
     ```
+- If you decorate some classes or functions with `@load_config`, the loader will load them.
+  However, initialized `strict=True`, the loader denies multiple loading as below.
+  - pkg/validator_a.py
+  ```python
+  from autoload import load_config
+
+  # This will be loaded because of name's rule.
+  class ValidatorA:
+    def validate(self):
+        print("validateA!!")
+  
+  # Anything goes.
+  @load_config(order=2)
+  class Foo:
+    pass
+  ```
+  
+  - main.py
+  ```python
+  from autoload import ModuleLoader
+  from autoload.exception import LoaderStrictModeError
+  
+  loader = ModuleLoader()
+  # return ValidatorA and Foo class objects.
+  classes = loader.load_classes("pkg")
+
+  # ModuleLoader strictly try to load a class or function object
+  # per a Python module on a basis of its name.
+  strict_loader = ModuleLoader(strict=True)
+  try:
+    classes = strict_loader.load_classes("pkg")
+  except LoaderStrictModeError as e:
+    print(e)
+  # -> Loader can only load a 'ValidatorA' class in validator_a module.
+  # -> Please check 'Foo' in validator_a module.
+  ```
 #### load_class
 ```
-load_class(file_name)
+load_class(file_name: str)
 ```
 This method read the Python file and return the class object.
 - Directory
@@ -214,7 +264,7 @@ How to specify `file_name` is the same as that of `load_classes`.
 
 #### load_function
 ```
-load_function(file_name)
+load_function(file_name: str)
 ```
 This method read the Python file and return a function object.
 The usage is the same as `load_class`.

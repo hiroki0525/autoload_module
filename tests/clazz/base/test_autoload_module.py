@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
 
 from autoload import ModuleLoader
+from autoload.exception import LoaderStrictModeError
 from tests.clazz.base.module_1 import Module1
 from tests.clazz.base.module_2 import Module2
 from tests.clazz.base.module_3 import Module3
@@ -173,6 +174,29 @@ class TestAutoLoadModule(unittest.TestCase):
                 classes = self.loader.load_classes(pkg_name)
                 instances = tuple([clazz() for clazz in classes])
                 self.assertTupleEqual(instances, expected)
+
+    def test_strict_mode(self):
+        self.loader = ModuleLoader(strict=True)
+        self.test_load_classes_exclude()
+        self.test_load_classes_partial_order()
+        self.test_load_classes_no_order()
+        self.test_load_classes_order()
+
+    def test_strict_mode_raise_error(self):
+        self.loader = ModuleLoader(strict=True)
+        test_cases = (
+            "packageD",
+            # 'load_classes' will be able to load not only package but also module.
+            # "packageD.module_d1"
+        )
+        for pkg_name in test_cases:
+            with self.assertRaises(LoaderStrictModeError):
+                try:
+                    self.loader.load_classes(pkg_name)
+                except LoaderStrictModeError as e:
+                    # check message
+                    print(e)
+                    raise e
 
 
 if __name__ == '__main__':

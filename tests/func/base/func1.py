@@ -1,4 +1,8 @@
 from math import acos
 
+from tests.func.test_function import test_function
+
+
+@test_function
 def func1():
-    return 'func1'
+    pass

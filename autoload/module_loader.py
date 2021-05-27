@@ -1,11 +1,13 @@
 import inspect
-from abc import ABC, abstractmethod
-from enum import Enum, auto
 from importlib import import_module
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
 from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
+
+from ._context import Context, ContextFactory
+from ._globals import LoadType
+from .exception import LoaderStrictModeError
 
 __all__ = "ModuleLoader"
 
@@ -55,63 +57,21 @@ def _access_private():
     return __Private
 
 
-class _LoadType(Enum):
-    func = auto()
-    clazz = auto()
-
-
-class _Context(ABC):
-    @abstractmethod
-    def predicate(self):
-        raise Exception("'predicate' function is not defined.")
-
-    @abstractmethod
-    def draw_comparison(self, file: str):
-        raise Exception("'draw_comparison' function is not defined.")
-
-
-class _ClassContext(_Context):
-    def predicate(self):
-        return inspect.isclass
-
-    def draw_comparison(self, file: str):
-        return "".join(file.split("_")).lower()
-
-
-class _FunctionContext(_Context):
-    def predicate(self):
-        return inspect.isfunction
-
-    def draw_comparison(self, file: str):
-        return file.lower()
-
-
-class _ContextFactory:
-    __class_context: Optional[_ClassContext] = None
-    __function_context: Optional[_FunctionContext] = None
-
-    @classmethod
-    def get(cls, load_type: _LoadType) -> _Context:
-        if load_type == _LoadType.clazz:
-            if cls.__class_context is None:
-                cls.__class_context = _ClassContext()
-            return cls.__class_context
-        if cls.__function_context is None:
-            cls.__function_context = _FunctionContext()
-        return cls.__function_context
-
-
 _T = TypeVar("_T", Type[Any], Callable)
 
 
 class ModuleLoader:
-    def __init__(self, base_path: Optional[str] = None):
+    def __init__(self, base_path: Optional[str] = None, strict: bool = False):
         """initialize
         :param base_path: Base path for import.
             Defaults to the path where this object was initialized.
+        :param strict: If strict is True,
+            ModuleLoader strictly try to load a class or function object
+            per a Python module on a basis of its name.
         """
         self.__base_path: str = _access_private().init_base_url(base_path)
-        self.__context: _Context = _ContextFactory.get(_LoadType.clazz)
+        self.__context: Context = ContextFactory.get(LoadType.clazz)
+        self.__strict: bool = strict
 
     @property
     def base_path(self) -> str:
@@ -123,7 +83,7 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: class object defined in the Python file (Module) according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.clazz)
+        self.__context = ContextFactory.get(LoadType.clazz)
         return self.__load_resource(file_name)
 
     def load_function(self, file_name: str) -> Callable:
@@ -132,14 +92,14 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: function object defined in the Python file (Module) according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.func)
+        self.__context = ContextFactory.get(LoadType.func)
         return self.__load_resource(file_name)
 
     def load_classes(
         self,
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
-        recursive: Optional[bool] = False,
+        recursive: bool = False,
     ) -> Tuple[Type]:
         """Import Python package and return classes.
         :param pkg_name: Python package name (directory name).
@@ -148,14 +108,14 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.clazz)
+        self.__context = ContextFactory.get(LoadType.clazz)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
     def load_functions(
         self,
         pkg_name: str,
         excludes: Optional[Iterable[str]] = None,
-        recursive: Optional[bool] = False,
+        recursive: bool = False,
     ) -> Tuple[Callable]:
         """Import Python package and return functions.
         :param pkg_name: Python package name (directory name).
@@ -164,7 +124,7 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: function objects defined in the Python package according to rules.
         """
-        self.__context = _ContextFactory.get(_LoadType.func)
+        self.__context = ContextFactory.get(LoadType.func)
         return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
 
     def __path_fix(self, name: str) -> str:
@@ -229,12 +189,11 @@ class ModuleLoader:
         context = self.__context
         comparison = context.draw_comparison(target_file)
         for mod_name, resource in inspect.getmembers(module, context.predicate()):
-            if (
-                hasattr(resource, _access_private().DECORATOR_ATTR)
-                and resource._load_flg
+            if hasattr(resource, _access_private().DECORATOR_ATTR) and getattr(
+                resource, "_load_flg"
             ):
                 return resource
-            if comparison != mod_name.lower():
+            if comparison != mod_name:
                 continue
             return resource
 
@@ -246,7 +205,7 @@ class ModuleLoader:
     ) -> Tuple[_T]:
         target_dir = self.__path_fix(pkg_name)
         if not os_path.isdir(target_dir):
-            raise NotADirectoryError("Not Found The Directory : {}".format(target_dir))
+            raise NotADirectoryError(f"Not Found The Directory : {target_dir}")
         if target_dir not in sys_path:
             sys_path.append(target_dir)
         files = [
@@ -268,17 +227,60 @@ class ModuleLoader:
         excluded_files = set(files) - set(fix_excludes)
         mods: List[_T] = []
         decorator_attr = private.DECORATOR_ATTR
+        context = self.__context
+        is_strict = self.__strict
+        load_type_name = context.load_type.value
         for file in excluded_files:
             module = import_module(file)
-            context = self.__context
-            for mod_name, mod in inspect.getmembers(module, context.predicate()):
-                if hasattr(mod, decorator_attr) and mod._load_flg:
-                    mods.append(mod)
-                    continue
-                if context.draw_comparison(file) == mod_name.lower():
-                    if hasattr(mod, decorator_attr) and not mod._load_flg:
+            target_load_name = context.draw_comparison(file)
+            is_found = False
+            error = None
+            members = inspect.getmembers(module, context.predicate())
+            for mod_name, mod in members:
+                is_name_match = target_load_name == mod_name
+                if hasattr(mod, decorator_attr):
+                    if not getattr(mod, "_load_flg"):
+                        continue
+                    if is_found:
+                        # High priority error
+                        error = LoaderStrictModeError(
+                            f"Loader can only load a "
+                            f"'{target_load_name}' {load_type_name} in {file} module."
+                            f"\nPlease check '{mod_name}' in {file} module."
+                        )
+                        break
+                    if is_strict and not is_name_match:
+                        error = LoaderStrictModeError(
+                            f"Loader can't load '{mod_name}' in {file} module."
+                            f"\nPlease rename '{target_load_name}' {load_type_name}."
+                        )
                         continue
                     mods.append(mod)
+                    if is_strict:
+                        if error:
+                            # High priority error
+                            error = LoaderStrictModeError(
+                                f"Loader can only load a "
+                                f"'{target_load_name}' {load_type_name} "
+                                f"in {file} module."
+                            )
+                            break
+                        is_found = True
+                    continue
+                if not is_name_match:
+                    continue
+                mods.append(mod)
+                if is_strict:
+                    if error:
+                        # High priority error
+                        error = LoaderStrictModeError(
+                            f"Loader can only load a "
+                            f"'{target_load_name}' {load_type_name} in {file} module."
+                        )
+                        break
+                    is_found = True
+            if error is not None:
+                raise error
         if recursive:
             dirs = [
                 f
@@ -297,18 +299,23 @@ class ModuleLoader:
                     )
                     mods += recursive_mods
         has_order_mods = [
-            mod for mod in mods if hasattr(mod, "_load_order") and mod._load_order
+            mod
+            for mod in mods
+            if hasattr(mod, "_load_order") and getattr(mod, "_load_order")
         ]
         if not has_order_mods:
             return tuple(mods)
         no_has_order_mods = [
             mod
             for mod in mods
-            if not hasattr(mod, "_load_order") or not mod._load_order
+            if not hasattr(mod, "_load_order") or not getattr(mod, "_load_order")
         ]
         if not no_has_order_mods:
-            return tuple(sorted(has_order_mods, key=lambda mod: mod._load_order))
+            return tuple(
+                sorted(has_order_mods, key=lambda m: getattr(m, "_load_order"))
+            )
         ordered_mods = (
-            sorted(has_order_mods, key=lambda mod: mod._load_order) + no_has_order_mods
+            sorted(has_order_mods, key=lambda m: getattr(m, "_load_order"))
+            + no_has_order_mods
         )
         return tuple(ordered_mods)
