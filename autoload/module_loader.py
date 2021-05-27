@@ -1,4 +1,5 @@
 import inspect
+import warnings
 from importlib import import_module
 from os import listdir
 from os import path as os_path
@@ -97,35 +98,51 @@ class ModuleLoader:
 
     def load_classes(
         self,
-        pkg_name: str,
+        src: str,
         excludes: Optional[Iterable[str]] = None,
         recursive: bool = False,
+        *args,
+        **kwargs,
     ) -> Tuple[Type]:
         """Import Python package and return classes.
-        :param pkg_name: Python package name (directory name).
+        :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
         :param excludes: Python file names you don't want to import in the package.
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
+        pkg_name = kwargs.get("pkg_name")
+        if kwargs.get("pkg_name") is not None:
+            warnings.warn(
+                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
+            )
+            src = pkg_name
         self.__context = ContextFactory.get(LoadType.clazz)
-        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
+        return self.__load_resources(src, excludes=excludes, recursive=recursive)
 
     def load_functions(
         self,
-        pkg_name: str,
+        src: str,
         excludes: Optional[Iterable[str]] = None,
         recursive: bool = False,
+        *args,
+        **kwargs,
     ) -> Tuple[Callable]:
         """Import Python package and return functions.
-        :param pkg_name: Python package name (directory name).
+        :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
         :param excludes: Python file names you don't want to import in the package.
         :param recursive: If True, import Python package recursively.
         :return: function objects defined in the Python package according to rules.
         """
+        pkg_name = kwargs.get("pkg_name")
+        if kwargs.get("pkg_name") is not None:
+            warnings.warn(
+                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
+            )
+            src = pkg_name
         self.__context = ContextFactory.get(LoadType.func)
-        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
+        return self.__load_resources(src, excludes=excludes, recursive=recursive)
 
     def __path_fix(self, name: str) -> str:
         if not name or name == "." or name == "/" or name == "./":
