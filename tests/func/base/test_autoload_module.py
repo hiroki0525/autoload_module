@@ -69,9 +69,9 @@ class TestAutoLoadModule(unittest.TestCase):
             (".", ["func3", "func2"], {func1()}),
             (".", ("func3", "func2"), {func1()}),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for pkg_name, excludes, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, excludes=excludes):
+                functions = self.loader.load_functions(pkg_name=pkg_name, excludes=excludes)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
 

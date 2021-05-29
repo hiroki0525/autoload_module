@@ -91,7 +91,7 @@ class ModuleLoader:
 
     def load_classes(
         self,
-        src: str,
+        src: Optional[str] = None,  # Temporary Optional because of pkg_name
         excludes: Iterable[str] = (),
         recursive: bool = False,
         *args,
@@ -110,12 +110,14 @@ class ModuleLoader:
                 "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
             )
             src = pkg_name
+        if src is None:
+            raise TypeError("'src' parameter is required.")
         self.__context = ContextFactory.get(LoadType.clazz)
         return self.__load_resources(src, excludes=excludes, recursive=recursive)
 
     def load_functions(
         self,
-        src: str,
+        src: Optional[str] = None,  # Temporary Optional because of pkg_name
         excludes: Iterable[str] = (),
         recursive: bool = False,
         *args,
@@ -134,6 +136,8 @@ class ModuleLoader:
                 "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
             )
             src = pkg_name
+        if src is None:
+            raise TypeError("'src' parameter is required.")
         self.__context = ContextFactory.get(LoadType.func)
         return self.__load_resources(src, excludes=excludes, recursive=recursive)
 

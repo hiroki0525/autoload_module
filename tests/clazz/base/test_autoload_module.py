@@ -86,9 +86,9 @@ class TestAutoLoadModule(unittest.TestCase):
             (".", ["module_3", "module_2"], {Module1()}),
             (".", ("module_3", "module_2"), {Module1()}),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                classes = self.loader.load_classes(pkg_name, exclude)
+        for pkg_name, excludes, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, excludes=excludes):
+                classes = self.loader.load_classes(pkg_name=pkg_name, excludes=excludes)
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
 
