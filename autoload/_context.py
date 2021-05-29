@@ -15,11 +15,11 @@ class Context(ABC):
 
     @abstractmethod
     def predicate(self):
-        raise Exception("'predicate' function is not defined.")
+        raise Exception("'predicate' method is not defined.")
 
     @abstractmethod
     def draw_comparison(self, file: str):
-        raise Exception("'draw_comparison' function is not defined.")
+        raise Exception("'draw_comparison' method is not defined.")
 
 
 class _ClassContext(Context):

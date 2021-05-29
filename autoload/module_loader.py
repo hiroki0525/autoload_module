@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from ._context import Context, ContextFactory
 from ._globals import LoadType
-from ._import import ImportableFactory
+from ._import import ImportableFactory, ImportOption
 from .exception import LoaderStrictModeError
 
 __all__ = "ModuleLoader"
@@ -175,7 +175,6 @@ class ModuleLoader:
                     break
                 path = name[i + 1 :]
                 level += 1
-            # TODO: Error Handling
             if path is not None:
                 base_path_arr = self.__base_path.split("/")
                 result_base_path = "/".join(
@@ -232,80 +231,10 @@ class ModuleLoader:
                 if not isinstance(exclude, str):
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
-        importable = ImportableFactory.get(target_dir, recursive, excludes)
-        mods: List[_T] = []
-        decorator_attr = private.DECORATOR_ATTR
         context = self.__context
-        is_strict = self.__strict
-        load_type_name = context.load_type.value
-        for file in importable.get_children_files():
-            module = import_module(file)
-            target_load_name = context.draw_comparison(file)
-            is_found = False
-            error = None
-            members = inspect.getmembers(module, context.predicate())
-            for mod_name, mod in members:
-                is_name_match = target_load_name == mod_name
-                if hasattr(mod, decorator_attr):
-                    if not getattr(mod, "_load_flg"):
-                        continue
-                    if is_found:
-                        # High priority error
-                        error = LoaderStrictModeError(
-                            f"Loader can only load a "
-                            f"'{target_load_name}' {load_type_name} in {file} module."
-                            f"\nPlease check '{mod_name}' in {file} module."
-                        )
-                        break
-                    if is_strict and not is_name_match:
-                        error = LoaderStrictModeError(
-                            f"Loader can't load '{mod_name}' in {file} module."
-                            f"\nPlease rename '{target_load_name}' {load_type_name}."
-                        )
-                        continue
-                    mods.append(mod)
-                    if is_strict:
-                        if error:
-                            # High priority error
-                            error = LoaderStrictModeError(
-                                f"Loader can only load a "
-                                f"'{target_load_name}' {load_type_name} "
-                                f"in {file} module."
-                            )
-                            break
-                        is_found = True
-                    continue
-                if not is_name_match:
-                    continue
-                mods.append(mod)
-                if is_strict:
-                    if error:
-                        # High priority error
-                        error = LoaderStrictModeError(
-                            f"Loader can only load a "
-                            f"'{target_load_name}' {load_type_name} in {file} module."
-                        )
-                        break
-                    is_found = True
-            if error is not None:
-                raise error
-        if recursive:
-            dirs = [
-                f
-                for f in listdir(target_dir)
-                if os_path.isdir(f"{target_dir}{f}") and f not in private.EXCLUDE_DIRS
-            ]
-            if len(dirs) > 0:
-                for dir in dirs:
-                    fix_pkg_name = pkg_name
-                    if not fix_pkg_name.endswith("/"):
-                        fix_pkg_name += "/"
-                    recursive_mods = self.__load_resources(
-                        fix_pkg_name + dir,
-                        excludes=excludes,
-                        recursive=recursive,
-                    )
-                    mods += recursive_mods
+        import_option = ImportOption(recursive, excludes, self.__strict)
+        importable = ImportableFactory.get(target_dir, context, import_option)
+        mods: List[_T] = importable.import_resources()
         has_order_mods = [
             mod
             for mod in mods
