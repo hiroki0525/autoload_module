@@ -5,7 +5,7 @@ from importlib import import_module
 from os import listdir
 from os import path as os_path
 from sys import path as sys_path
-from typing import Any, Callable, Iterable, List, Optional
+from typing import Any, Callable, Iterable, List
 
 from ._context import Context
 from .exception import LoaderStrictModeError
@@ -25,14 +25,6 @@ def _exclude_ex(file_name: str) -> str:
     return os_path.splitext(file_name)[0]
 
 
-def _flatten(iterable: Iterable[Any]) -> Iterable[Any]:
-    for el in iterable:
-        if isinstance(el, Iterable) and not isinstance(el, (str, bytes)):
-            yield from _flatten(el)
-        else:
-            yield el
-
-
 _DECORATOR_ATTR = "_load_flg"
 
 
@@ -44,12 +36,14 @@ class ImportOption:
 
 
 class Importable(ABC):
-    def __init__(self, path: str, context: Context, option: ImportOption):
-        fix_excludes = [_exclude_py(e) for e in option.excludes]
+    def __init__(
+        self, path: str, context: Context, option: ImportOption = ImportOption()
+    ):
         self._path = _exclude_py(path)
         self._context = context
         self._option = option
         children = self._load_children()
+        fix_excludes = [_exclude_py(e) for e in option.excludes]
         self._children: List[Importable] = [
             child for child in children if child.get_base_name() not in fix_excludes
         ]
@@ -73,14 +67,6 @@ class Importable(ABC):
 
     def has_children(self) -> bool:
         return len(self._children) > 0
-
-    def load_all(self, callback: Callable):
-        children_files = self.get_children_files()
-        if len(children_files) == 0:
-            return
-        for file in children_files:
-            module = import_module(file)
-            callback(file, module)
 
     def _load_children(self):
         return []
@@ -179,8 +165,10 @@ class _Package(Importable):
 class ImportableFactory:
     @staticmethod
     def get(path: str, *args, **kwargs):
-        if os_path.isdir(path):
-            if path not in sys_path:
-                sys_path.append(path)
+        is_dir = os_path.isdir(path)
+        fixed_path = path if is_dir else "/".join(path.split("/")[:-1])
+        if fixed_path not in sys_path:
+            sys_path.append(fixed_path)
+        if is_dir:
             return _Package(path, *args, **kwargs)
         return _Module(path, *args, **kwargs)

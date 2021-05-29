@@ -186,25 +186,9 @@ class ModuleLoader:
         return self.__base_path + "/" + path
 
     def __load_resource(self, file_name: str) -> _T:
-        target_file = (
-            file_name.replace(".py", "") if file_name.endswith(".py") else file_name
-        )
-        fix_path_arr = self.__path_fix(target_file).split("/")
-        target_file = fix_path_arr[-2]
-        target_path = "/".join(fix_path_arr[:-2])
-        if target_path not in sys_path:
-            sys_path.append(target_path)
-        module = import_module(target_file)
-        context = self.__context
-        comparison = context.draw_comparison(target_file)
-        for mod_name, resource in inspect.getmembers(module, context.predicate()):
-            if hasattr(resource, _access_private().DECORATOR_ATTR) and getattr(
-                resource, "_load_flg"
-            ):
-                return resource
-            if comparison != mod_name:
-                continue
-            return resource
+        fix_path = self.__path_fix(file_name)
+        importable = ImportableFactory.get(fix_path, self.__context)
+        return importable.import_resources()[0]
 
     def __load_resources(
         self,
