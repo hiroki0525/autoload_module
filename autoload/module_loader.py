@@ -192,11 +192,11 @@ class ModuleLoader:
 
     def __load_resources(
         self,
-        pkg_name: str,
+        src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> Tuple[_T]:
-        target_dir = self.__path_fix(pkg_name)
+        target_dir = self.__path_fix(src)
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
         exclude_files.append(os_path.basename(private.detect_call_path()))
