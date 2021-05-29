@@ -75,7 +75,7 @@ class _Module(Importable):
         for mod_name, mod in members:
             is_name_match = target_load_name == mod_name
             if hasattr(mod, _DECORATOR_ATTR):
-                if not getattr(mod, "_load_flg"):
+                if not getattr(mod, _DECORATOR_ATTR):
                     continue
                 if is_found:
                     # High priority error

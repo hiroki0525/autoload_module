@@ -142,7 +142,7 @@ class ModuleLoader:
             result_path = self.__base_path + name
             # example: /foo/bar/
             if name.endswith("/"):
-                return result_path.rstrip("/")
+                return result_path[:-1]
             # example: /foo/bar
             return result_path
         if name.startswith("."):
@@ -151,7 +151,7 @@ class ModuleLoader:
                     result_path = self.__base_path + name[1:]
                     # example: ./foo/
                     if name.endswith("/"):
-                        return result_path.rstrip("/")
+                        return result_path[:-1]
                     # example: ./foo
                     return result_path
                 # example: .foo.bar
@@ -173,7 +173,7 @@ class ModuleLoader:
                 if path.startswith("/"):
                     if path.endswith("/"):
                         # example: ../foo/
-                        return result_base_path + path.rstrip("/")
+                        return result_base_path + path[:-1]
                     # example: ../foo
                     return result_base_path + path
                 # example: ..foo.bar
