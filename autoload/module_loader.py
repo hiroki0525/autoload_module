@@ -1,8 +1,6 @@
 import inspect
 import warnings
-from importlib import import_module
 from os import path as os_path
-from sys import path as sys_path
 from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from ._context import Context, ContextFactory
