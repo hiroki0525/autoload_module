@@ -17,7 +17,6 @@ class __Private:
 
     THIS_FILE = os_path.basename(__file__)
     DEFAULT_EXCLUDES = ("__init__.py", THIS_FILE, "__pycache__")
-    DECORATOR_ATTR = "_load_flg"
 
     def __new__(cls, *args, **kwargs):
         raise Exception(f"{cls.__name__} can't be initialized.")
