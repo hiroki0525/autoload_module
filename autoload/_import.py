@@ -11,8 +11,12 @@ from ._context import Context
 from .exception import LoaderStrictModeError
 
 
+def _is_module(name: str):
+    return name.endswith(".py")
+
+
 def _exclude_py(path: str) -> str:
-    if path.endswith(".py"):
+    if _is_module(path):
         return path.replace(".py", "")
     return path
 
@@ -35,40 +39,40 @@ _DECORATOR_ATTR = "_load_flg"
 @dataclass(frozen=True)
 class ImportOption:
     recursive: bool = False
-    excludes: Optional[Iterable[str]] = None
+    excludes: Iterable[str] = ()
     is_strict: bool = False
 
 
 class Importable(ABC):
     def __init__(self, path: str, context: Context, option: ImportOption):
         fix_excludes = [_exclude_py(e) for e in option.excludes]
-        self.__path = _exclude_py(path)
-        self.__context = context
-        self.__option = option
+        self._path = _exclude_py(path)
+        self._context = context
+        self._option = option
         children = self._load_children()
-        self.__children: List[Importable] = [
-            child for child in children if child.get_base_name() in fix_excludes
+        self._children: List[Importable] = [
+            child for child in children if child.get_base_name() not in fix_excludes
         ]
 
     @property
     def path(self):
-        return self.__path
+        return self._path
 
     @abstractmethod
     def import_resources(self):
         raise Exception("'import_resources' method is not defined.")
 
     def get_base_name(self):
-        return _exclude_ex(os_path.basename(self.__path))
+        return _exclude_ex(os_path.basename(self._path))
 
     def get_all_paths(self):
-        return [self.__path].extend([child.path for child in self.__children])
+        return [self._path].extend([child.path for child in self._children])
 
     def get_children_files(self):
-        return [child.get_base_name() for child in self.__children]
+        return [child.get_base_name() for child in self._children]
 
     def has_children(self) -> bool:
-        return len(self.__children) > 0
+        return len(self._children) > 0
 
     def load_all(self, callback: Callable):
         children_files = self.get_children_files()
@@ -85,8 +89,8 @@ class Importable(ABC):
 class _Module(Importable):
     def import_resources(self):
         file = self.get_base_name()
-        context = self.__context
-        is_strict = self.__option.is_strict
+        context = self._context
+        is_strict = self._option.is_strict
         load_type_name = context.load_type.value
         module = import_module(file)
         target_load_name = context.draw_comparison(file)
@@ -144,22 +148,31 @@ class _Module(Importable):
 
 class _Package(Importable):
     def import_resources(self):
-        return _flatten([child.import_resources() for child in self.__children])
+        return [
+            resource
+            for child in self._children
+            for resource in child.import_resources()
+        ]
 
     def _load_children(self):
-        path = self.__path
-        context = self.__context
-        option = self.__option
+        path = self._path
+        option = self._option
         children = []
         for file_or_dir in listdir(path):
             if file_or_dir in option.excludes:
                 continue
-            if file_or_dir.endswith(".py"):
-                children.append(
-                    Importable(f"{path}/{_exclude_ex(file_or_dir)}", context, option)
-                )
+            is_module = _is_module(file_or_dir)
+            is_pkg = os_path.isdir(f"{path}/{file_or_dir}")
+            if not is_module and not is_pkg:
                 continue
-            children.append(_Package(f"{path}/{file_or_dir}/", context, option))
+            if is_pkg and not option.recursive:
+                continue
+            fixed_file_or_dir = _exclude_ex(file_or_dir) if is_module else file_or_dir
+            children.append(
+                ImportableFactory.get(
+                    f"{path}/{fixed_file_or_dir}", self._context, option
+                )
+            )
         return children
 
 

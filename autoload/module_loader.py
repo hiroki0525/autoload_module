@@ -1,7 +1,6 @@
 import inspect
 import warnings
 from importlib import import_module
-from os import listdir
 from os import path as os_path
 from sys import path as sys_path
 from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
@@ -9,7 +8,6 @@ from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
 from ._context import Context, ContextFactory
 from ._globals import LoadType
 from ._import import ImportableFactory, ImportOption
-from .exception import LoaderStrictModeError
 
 __all__ = "ModuleLoader"
 
@@ -20,14 +18,8 @@ class __Private:
     """
 
     THIS_FILE = os_path.basename(__file__)
-    DEFAULT_EXCLUDES = (
-        "__init__.py",
-        THIS_FILE,
-    )
+    DEFAULT_EXCLUDES = ("__init__.py", THIS_FILE, "__pycache__")
     DECORATOR_ATTR = "_load_flg"
-    EXCLUDE_DIRS = {
-        "__pycache__",
-    }
 
     def __new__(cls, *args, **kwargs):
         raise Exception(f"{cls.__name__} can't be initialized.")
@@ -100,7 +92,7 @@ class ModuleLoader:
     def load_classes(
         self,
         src: str,
-        excludes: Optional[Iterable[str]] = None,
+        excludes: Iterable[str] = (),
         recursive: bool = False,
         *args,
         **kwargs,
@@ -124,7 +116,7 @@ class ModuleLoader:
     def load_functions(
         self,
         src: str,
-        excludes: Optional[Iterable[str]] = None,
+        excludes: Iterable[str] = (),
         recursive: bool = False,
         *args,
         **kwargs,
@@ -152,20 +144,20 @@ class ModuleLoader:
             result_path = self.__base_path + name
             # example: /foo/bar/
             if name.endswith("/"):
-                return result_path
+                return result_path.rstrip("/")
             # example: /foo/bar
-            return result_path + "/"
+            return result_path
         if name.startswith("."):
             if name[1] != ".":
                 if name[1] == "/":
                     result_path = self.__base_path + name[1:]
                     # example: ./foo/
                     if name.endswith("/"):
-                        return result_path
+                        return result_path.rstrip("/")
                     # example: ./foo
-                    return result_path + "/"
+                    return result_path
                 # example: .foo.bar
-                return self.__base_path + "/".join(name.split(".")) + "/"
+                return self.__base_path + "/".join(name.split("."))
             level = 0
             path = None
             for i in range(len(name)):
@@ -183,15 +175,15 @@ class ModuleLoader:
                 if path.startswith("/"):
                     if path.endswith("/"):
                         # example: ../foo/
-                        return result_base_path + path
+                        return result_base_path + path.rstrip("/")
                     # example: ../foo
-                    return result_base_path + path + "/"
+                    return result_base_path + path
                 # example: ..foo.bar
                 path = "/".join(path.split("."))
-                return result_base_path + "/" + path + "/"
+                return result_base_path + "/" + path
         # example: foo.bar
         path = "/".join(name.split("."))
-        return self.__base_path + "/" + path + "/"
+        return self.__base_path + "/" + path
 
     def __load_resource(self, file_name: str) -> _T:
         target_file = (
@@ -217,8 +209,8 @@ class ModuleLoader:
     def __load_resources(
         self,
         pkg_name: str,
-        excludes: Optional[Iterable[str]] = None,
-        recursive: Optional[bool] = False,
+        excludes: Iterable[str] = (),
+        recursive: bool = False,
     ) -> Tuple[_T]:
         target_dir = self.__path_fix(pkg_name)
         private = _access_private()
@@ -232,7 +224,7 @@ class ModuleLoader:
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
         context = self.__context
-        import_option = ImportOption(recursive, excludes, self.__strict)
+        import_option = ImportOption(recursive, exclude_files, self.__strict)
         importable = ImportableFactory.get(target_dir, context, import_option)
         mods: List[_T] = importable.import_resources()
         has_order_mods = [
