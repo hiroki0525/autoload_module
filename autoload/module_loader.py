@@ -90,7 +90,7 @@ class ModuleLoader:
         recursive: bool = False,
         *args,
         **kwargs,
-    ) -> Tuple[Type]:
+    ) -> Tuple[Type, ...]:
         """Import Python package and return classes.
         :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
@@ -116,7 +116,7 @@ class ModuleLoader:
         recursive: bool = False,
         *args,
         **kwargs,
-    ) -> Tuple[Callable]:
+    ) -> Tuple[Callable, ...]:
         """Import Python package and return functions.
         :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
@@ -193,7 +193,7 @@ class ModuleLoader:
         src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[Class_Or_Func]:
+    ) -> Tuple[Class_Or_Func, ...]:
         target_dir = self.__path_fix(src)
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)

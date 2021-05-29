@@ -56,7 +56,7 @@ class Importable(ABC):
     def get_base_name(self) -> str:
         return _exclude_ex(os_path.basename(self._path))
 
-    def _load_children(self):
+    def _load_children(self) -> List["Importable"]:
         return []
 
 
