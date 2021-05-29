@@ -1,10 +1,10 @@
 import inspect
 import warnings
 from os import path as os_path
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Iterable, List, Optional, Tuple, Type
 
 from ._context import Context, ContextFactory
-from ._globals import LoadType
+from ._globals import Class_Or_Func, LoadType
 from ._import import ImportableFactory, ImportOption
 
 __all__ = "ModuleLoader"
@@ -46,9 +46,6 @@ class __Private:
 
 def _access_private():
     return __Private
-
-
-_T = TypeVar("_T", Type[Any], Callable)
 
 
 class ModuleLoader:
@@ -186,7 +183,7 @@ class ModuleLoader:
         path = "/".join(name.split("."))
         return self.__base_path + "/" + path
 
-    def __load_resource(self, file_name: str) -> _T:
+    def __load_resource(self, file_name: str) -> Class_Or_Func:
         fix_path = self.__path_fix(file_name)
         importable = ImportableFactory.get(fix_path, self.__context)
         return importable.import_resources()[0]
@@ -196,7 +193,7 @@ class ModuleLoader:
         src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[_T]:
+    ) -> Tuple[Class_Or_Func]:
         target_dir = self.__path_fix(src)
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
@@ -211,7 +208,7 @@ class ModuleLoader:
         context = self.__context
         import_option = ImportOption(recursive, exclude_files, self.__strict)
         importable = ImportableFactory.get(target_dir, context, import_option)
-        mods: List[_T] = importable.import_resources()
+        mods: List[Class_Or_Func] = importable.import_resources()
         has_order_mods = [
             mod
             for mod in mods

@@ -8,10 +8,11 @@ from sys import path as sys_path
 from typing import Iterable, List
 
 from ._context import Context
+from ._globals import Class_Or_Func
 from .exception import LoaderStrictModeError
 
 
-def _is_module(name: str):
+def _is_module(name: str) -> bool:
     return name.endswith(".py")
 
 
@@ -48,32 +49,19 @@ class Importable(ABC):
             child for child in children if child.get_base_name() not in fix_excludes
         ]
 
-    @property
-    def path(self):
-        return self._path
-
     @abstractmethod
-    def import_resources(self):
+    def import_resources(self) -> List[Class_Or_Func]:
         raise Exception("'import_resources' method is not defined.")
 
-    def get_base_name(self):
+    def get_base_name(self) -> str:
         return _exclude_ex(os_path.basename(self._path))
-
-    def get_all_paths(self):
-        return [self._path].extend([child.path for child in self._children])
-
-    def get_children_files(self):
-        return [child.get_base_name() for child in self._children]
-
-    def has_children(self) -> bool:
-        return len(self._children) > 0
 
     def _load_children(self):
         return []
 
 
 class _Module(Importable):
-    def import_resources(self):
+    def import_resources(self) -> List[Class_Or_Func]:
         file = self.get_base_name()
         context = self._context
         is_strict = self._option.is_strict
@@ -133,14 +121,14 @@ class _Module(Importable):
 
 
 class _Package(Importable):
-    def import_resources(self):
+    def import_resources(self) -> List[Class_Or_Func]:
         return [
             resource
             for child in self._children
             for resource in child.import_resources()
         ]
 
-    def _load_children(self):
+    def _load_children(self) -> List[Importable]:
         path = self._path
         option = self._option
         children = []
@@ -164,7 +152,7 @@ class _Package(Importable):
 
 class ImportableFactory:
     @staticmethod
-    def get(path: str, *args, **kwargs):
+    def get(path: str, *args, **kwargs) -> Importable:
         is_dir = os_path.isdir(path)
         fixed_path = path if is_dir else "/".join(path.split("/")[:-1])
         if fixed_path not in sys_path:
