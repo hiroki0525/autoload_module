@@ -47,6 +47,19 @@ class TestAutoLoadModule(unittest.TestCase):
             with self.subTest(file_name=file_name):
                 self.assertEqual(self.loader.load_function(file_name)(), expected)
 
+    def test_load_functions_by_module(self):
+        test_cases = (
+            ("func1", {func1()}),
+            (".packageD.not_load", set()),
+            (".packageD.package_d_func1", {package_d_func1(), multiple2(), multiple3()}),
+            (".packageD.package_d_func2", {multiple4(), multiple5()}),
+        )
+        for pkg_name, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name):
+                classes = self.loader.load_functions(pkg_name)
+                instances = set([clazz() for clazz in classes])
+                self.assertSetEqual(instances, expected)
+
     def test_load_functions_exclude(self):
         basepkg_result = {func3(), func2(), func1()}
         test_cases = (
@@ -56,9 +69,9 @@ class TestAutoLoadModule(unittest.TestCase):
             (".", ["func3", "func2"], {func1()}),
             (".", ("func3", "func2"), {func1()}),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for pkg_name, excludes, expected in test_cases:
+            with self.subTest(pkg_name=pkg_name, excludes=excludes):
+                functions = self.loader.load_functions(pkg_name=pkg_name, excludes=excludes)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
 
@@ -158,8 +171,7 @@ class TestAutoLoadModule(unittest.TestCase):
         self.loader = ModuleLoader(strict=True)
         test_cases = (
             "packageD",
-            # 'load_classes' will be able to load not only package but also module.
-            # "packageD.module_d1"
+            "packageD.package_d_func1"
         )
         for pkg_name in test_cases:
             with self.assertRaises(LoaderStrictModeError):
