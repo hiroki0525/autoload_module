@@ -75,12 +75,19 @@ About strict parameter, please see [here](#NOTE) .
 #### load_classes
 ```
 load_classes(
-    pkg_name: str,
-    excludes: Optional[Iterable[str]] = None,
+    src: str,
+    excludes: Iterable[str] = (),
     recursive: bool = False,
 ) -> Tuple[Type]:
 ```
-This method read the Python package and return the tuple of class objects.
+This method read the Python package or module and return the tuple of class objects.
+
+**NOTE**
+
+From version 1.5.0, `pkg_name` parameter is duplicated.
+It will be deleted soon. 
+`load_functions` is also same.
+
 - Directory
 ```
 pkg/
@@ -168,12 +175,12 @@ loader.load_classes("..otherpkg")
 #### load_functions
 ```
 load_functions(
-    pkg_name: str,
-    excludes: Optional[Iterable[str]] = None,
+    src: str,
+    excludes: Iterable[str] = (),
     recursive: bool = False,
 ) -> Tuple[Callable]:
 ```
-This method read the Python package and return the tuple of functions.
+This method read the Python package or module and return the tuple of functions.
 The usage is the same as `load_classes`.
 
 ##### NOTE

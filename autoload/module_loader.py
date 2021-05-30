@@ -1,13 +1,11 @@
 import inspect
-from importlib import import_module
-from os import listdir
+import warnings
 from os import path as os_path
-from sys import path as sys_path
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import Callable, Iterable, List, Optional, Tuple, Type
 
 from ._context import Context, ContextFactory
-from ._globals import LoadType
-from .exception import LoaderStrictModeError
+from ._globals import Class_Or_Func, LoadType
+from ._import import ImportableFactory, ImportOption
 
 __all__ = "ModuleLoader"
 
@@ -18,14 +16,7 @@ class __Private:
     """
 
     THIS_FILE = os_path.basename(__file__)
-    DEFAULT_EXCLUDES = (
-        "__init__.py",
-        THIS_FILE,
-    )
-    DECORATOR_ATTR = "_load_flg"
-    EXCLUDE_DIRS = {
-        "__pycache__",
-    }
+    DEFAULT_EXCLUDES = ("__init__.py", THIS_FILE, "__pycache__")
 
     def __new__(cls, *args, **kwargs):
         raise Exception(f"{cls.__name__} can't be initialized.")
@@ -55,9 +46,6 @@ class __Private:
 
 def _access_private():
     return __Private
-
-
-_T = TypeVar("_T", Type[Any], Callable)
 
 
 class ModuleLoader:
@@ -97,35 +85,55 @@ class ModuleLoader:
 
     def load_classes(
         self,
-        pkg_name: str,
-        excludes: Optional[Iterable[str]] = None,
+        src: Optional[str] = None,  # Temporary Optional because of pkg_name
+        excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[Type]:
+        *args,
+        **kwargs,
+    ) -> Tuple[Type, ...]:
         """Import Python package and return classes.
-        :param pkg_name: Python package name (directory name).
+        :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
         :param excludes: Python file names you don't want to import in the package.
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
+        pkg_name = kwargs.get("pkg_name")
+        if kwargs.get("pkg_name") is not None:
+            warnings.warn(
+                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
+            )
+            src = pkg_name
+        if src is None:
+            raise TypeError("'src' parameter is required.")
         self.__context = ContextFactory.get(LoadType.clazz)
-        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
+        return self.__load_resources(src, excludes=excludes, recursive=recursive)
 
     def load_functions(
         self,
-        pkg_name: str,
-        excludes: Optional[Iterable[str]] = None,
+        src: Optional[str] = None,  # Temporary Optional because of pkg_name
+        excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[Callable]:
+        *args,
+        **kwargs,
+    ) -> Tuple[Callable, ...]:
         """Import Python package and return functions.
-        :param pkg_name: Python package name (directory name).
+        :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
         :param excludes: Python file names you don't want to import in the package.
         :param recursive: If True, import Python package recursively.
         :return: function objects defined in the Python package according to rules.
         """
+        pkg_name = kwargs.get("pkg_name")
+        if kwargs.get("pkg_name") is not None:
+            warnings.warn(
+                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
+            )
+            src = pkg_name
+        if src is None:
+            raise TypeError("'src' parameter is required.")
         self.__context = ContextFactory.get(LoadType.func)
-        return self.__load_resources(pkg_name, excludes=excludes, recursive=recursive)
+        return self.__load_resources(src, excludes=excludes, recursive=recursive)
 
     def __path_fix(self, name: str) -> str:
         if not name or name == "." or name == "/" or name == "./":
@@ -134,20 +142,20 @@ class ModuleLoader:
             result_path = self.__base_path + name
             # example: /foo/bar/
             if name.endswith("/"):
-                return result_path
+                return result_path[:-1]
             # example: /foo/bar
-            return result_path + "/"
+            return result_path
         if name.startswith("."):
             if name[1] != ".":
                 if name[1] == "/":
                     result_path = self.__base_path + name[1:]
                     # example: ./foo/
                     if name.endswith("/"):
-                        return result_path
+                        return result_path[:-1]
                     # example: ./foo
-                    return result_path + "/"
+                    return result_path
                 # example: .foo.bar
-                return self.__base_path + "/".join(name.split(".")) + "/"
+                return self.__base_path + "/".join(name.split("."))
             level = 0
             path = None
             for i in range(len(name)):
@@ -157,7 +165,6 @@ class ModuleLoader:
                     break
                 path = name[i + 1 :]
                 level += 1
-            # TODO: Error Handling
             if path is not None:
                 base_path_arr = self.__base_path.split("/")
                 result_base_path = "/".join(
@@ -166,53 +173,28 @@ class ModuleLoader:
                 if path.startswith("/"):
                     if path.endswith("/"):
                         # example: ../foo/
-                        return result_base_path + path
+                        return result_base_path + path[:-1]
                     # example: ../foo
-                    return result_base_path + path + "/"
+                    return result_base_path + path
                 # example: ..foo.bar
                 path = "/".join(path.split("."))
-                return result_base_path + "/" + path + "/"
+                return result_base_path + "/" + path
         # example: foo.bar
         path = "/".join(name.split("."))
-        return self.__base_path + "/" + path + "/"
+        return self.__base_path + "/" + path
 
-    def __load_resource(self, file_name: str) -> _T:
-        target_file = (
-            file_name.replace(".py", "") if file_name.endswith(".py") else file_name
-        )
-        fix_path_arr = self.__path_fix(target_file).split("/")
-        target_file = fix_path_arr[-2]
-        target_path = "/".join(fix_path_arr[:-2])
-        if target_path not in sys_path:
-            sys_path.append(target_path)
-        module = import_module(target_file)
-        context = self.__context
-        comparison = context.draw_comparison(target_file)
-        for mod_name, resource in inspect.getmembers(module, context.predicate()):
-            if hasattr(resource, _access_private().DECORATOR_ATTR) and getattr(
-                resource, "_load_flg"
-            ):
-                return resource
-            if comparison != mod_name:
-                continue
-            return resource
+    def __load_resource(self, file_name: str) -> Class_Or_Func:
+        fix_path = self.__path_fix(file_name)
+        importable = ImportableFactory.get(fix_path, self.__context)
+        return importable.import_resources()[0]
 
     def __load_resources(
         self,
-        pkg_name: str,
-        excludes: Optional[Iterable[str]] = None,
-        recursive: Optional[bool] = False,
-    ) -> Tuple[_T]:
-        target_dir = self.__path_fix(pkg_name)
-        if not os_path.isdir(target_dir):
-            raise NotADirectoryError(f"Not Found The Directory : {target_dir}")
-        if target_dir not in sys_path:
-            sys_path.append(target_dir)
-        files = [
-            os_path.splitext(file)[0]
-            for file in listdir(target_dir)
-            if file.endswith(".py")
-        ]
+        src: str,
+        excludes: Iterable[str] = (),
+        recursive: bool = False,
+    ) -> Tuple[Class_Or_Func, ...]:
+        target_dir = self.__path_fix(src)
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
         exclude_files.append(os_path.basename(private.detect_call_path()))
@@ -223,81 +205,10 @@ class ModuleLoader:
                 if not isinstance(exclude, str):
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
-        fix_excludes = [exclude.replace(".py", "") for exclude in exclude_files]
-        excluded_files = set(files) - set(fix_excludes)
-        mods: List[_T] = []
-        decorator_attr = private.DECORATOR_ATTR
         context = self.__context
-        is_strict = self.__strict
-        load_type_name = context.load_type.value
-        for file in excluded_files:
-            module = import_module(file)
-            target_load_name = context.draw_comparison(file)
-            is_found = False
-            error = None
-            members = inspect.getmembers(module, context.predicate())
-            for mod_name, mod in members:
-                is_name_match = target_load_name == mod_name
-                if hasattr(mod, decorator_attr):
-                    if not getattr(mod, "_load_flg"):
-                        continue
-                    if is_found:
-                        # High priority error
-                        error = LoaderStrictModeError(
-                            f"Loader can only load a "
-                            f"'{target_load_name}' {load_type_name} in {file} module."
-                            f"\nPlease check '{mod_name}' in {file} module."
-                        )
-                        break
-                    if is_strict and not is_name_match:
-                        error = LoaderStrictModeError(
-                            f"Loader can't load '{mod_name}' in {file} module."
-                            f"\nPlease rename '{target_load_name}' {load_type_name}."
-                        )
-                        continue
-                    mods.append(mod)
-                    if is_strict:
-                        if error:
-                            # High priority error
-                            error = LoaderStrictModeError(
-                                f"Loader can only load a "
-                                f"'{target_load_name}' {load_type_name} "
-                                f"in {file} module."
-                            )
-                            break
-                        is_found = True
-                    continue
-                if not is_name_match:
-                    continue
-                mods.append(mod)
-                if is_strict:
-                    if error:
-                        # High priority error
-                        error = LoaderStrictModeError(
-                            f"Loader can only load a "
-                            f"'{target_load_name}' {load_type_name} in {file} module."
-                        )
-                        break
-                    is_found = True
-            if error is not None:
-                raise error
-        if recursive:
-            dirs = [
-                f
-                for f in listdir(target_dir)
-                if os_path.isdir(f"{target_dir}{f}") and f not in private.EXCLUDE_DIRS
-            ]
-            if len(dirs) > 0:
-                for dir in dirs:
-                    fix_pkg_name = pkg_name
-                    if not fix_pkg_name.endswith("/"):
-                        fix_pkg_name += "/"
-                    recursive_mods = self.__load_resources(
-                        fix_pkg_name + dir,
-                        excludes=excludes,
-                        recursive=recursive,
-                    )
-                    mods += recursive_mods
+        import_option = ImportOption(recursive, exclude_files, self.__strict)
+        importable = ImportableFactory.get(target_dir, context, import_option)
+        mods: List[Class_Or_Func] = importable.import_resources()
         has_order_mods = [
             mod
             for mod in mods
