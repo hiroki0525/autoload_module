@@ -1,7 +1,8 @@
 import inspect
 import warnings
+from dataclasses import dataclass
 from os import path as os_path
-from typing import Callable, Iterable, List, Optional, Tuple, Type
+from typing import Callable, ClassVar, Iterable, List, Optional, Tuple, Type
 
 from ._context import Context, ContextFactory
 from ._globals import Class_Or_Func, LoadType
@@ -48,8 +49,24 @@ def _access_private():
     return __Private
 
 
+@dataclass(frozen=True)
+class ModuleLoaderSetting:
+    base_path: Optional[str] = None
+    strict: bool = False
+
+
 class ModuleLoader:
-    def __init__(self, base_path: Optional[str] = None, strict: bool = False):
+    _setting: ClassVar[ModuleLoaderSetting] = ModuleLoaderSetting()
+
+    @classmethod
+    def get_setting(cls) -> ModuleLoaderSetting:
+        return cls._setting
+
+    @classmethod
+    def set_setting(cls, base_path: Optional[str] = None, strict: bool = False) -> None:
+        cls._setting = ModuleLoaderSetting(base_path, strict)
+
+    def __init__(self, base_path: Optional[str] = None, strict: Optional[bool] = None):
         """initialize
         :param base_path: Base path for import.
             Defaults to the path where this object was initialized.
@@ -57,9 +74,14 @@ class ModuleLoader:
             ModuleLoader strictly try to load a class or function object
             per a Python module on a basis of its name.
         """
-        self.__base_path: str = _access_private().init_base_url(base_path)
-        self.__context: Context = ContextFactory.get(LoadType.clazz)
-        self.__strict: bool = strict
+        setting = ModuleLoader._setting
+        global_base_path, global_strict = setting.base_path, setting.strict
+        self.__base_path: str = (
+            _access_private().init_base_url(base_path)
+            if global_base_path is None
+            else global_base_path
+        )
+        self.__strict: bool = global_strict if strict is None else strict
 
     @property
     def base_path(self) -> str:
@@ -71,8 +93,7 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: class object defined in the Python file (Module) according to rules.
         """
-        self.__context = ContextFactory.get(LoadType.clazz)
-        return self.__load_resource(file_name)
+        return self.__load_resource(file_name, ContextFactory.get(LoadType.clazz))
 
     def load_function(self, file_name: str) -> Callable:
         """Import Python module and return function.
@@ -80,8 +101,7 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: function object defined in the Python file (Module) according to rules.
         """
-        self.__context = ContextFactory.get(LoadType.func)
-        return self.__load_resource(file_name)
+        return self.__load_resource(file_name, ContextFactory.get(LoadType.func))
 
     def load_classes(
         self,
@@ -106,8 +126,12 @@ class ModuleLoader:
             src = pkg_name
         if src is None:
             raise TypeError("'src' parameter is required.")
-        self.__context = ContextFactory.get(LoadType.clazz)
-        return self.__load_resources(src, excludes=excludes, recursive=recursive)
+        return self.__load_resources(
+            src,
+            excludes=excludes,
+            recursive=recursive,
+            context=ContextFactory.get(LoadType.clazz),
+        )
 
     def load_functions(
         self,
@@ -132,8 +156,12 @@ class ModuleLoader:
             src = pkg_name
         if src is None:
             raise TypeError("'src' parameter is required.")
-        self.__context = ContextFactory.get(LoadType.func)
-        return self.__load_resources(src, excludes=excludes, recursive=recursive)
+        return self.__load_resources(
+            src,
+            excludes=excludes,
+            recursive=recursive,
+            context=ContextFactory.get(LoadType.func),
+        )
 
     def __path_fix(self, name: str) -> str:
         if not name or name == "." or name == "/" or name == "./":
@@ -183,14 +211,15 @@ class ModuleLoader:
         path = "/".join(name.split("."))
         return self.__base_path + "/" + path
 
-    def __load_resource(self, file_name: str) -> Class_Or_Func:
+    def __load_resource(self, file_name: str, context: Context) -> Class_Or_Func:
         fix_path = self.__path_fix(file_name)
-        importable = ImportableFactory.get(fix_path, self.__context)
+        importable = ImportableFactory.get(fix_path, context)
         return importable.import_resources()[0]
 
     def __load_resources(
         self,
         src: str,
+        context: Context,
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> Tuple[Class_Or_Func, ...]:
@@ -205,7 +234,6 @@ class ModuleLoader:
                 if not isinstance(exclude, str):
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
-        context = self.__context
         import_option = ImportOption(recursive, exclude_files, self.__strict)
         importable = ImportableFactory.get(target_dir, context, import_option)
         mods: List[Class_Or_Func] = importable.import_resources()
