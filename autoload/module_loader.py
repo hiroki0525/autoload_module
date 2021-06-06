@@ -8,7 +8,7 @@ from ._context import Context, ContextFactory
 from ._globals import Class_Or_Func, LoadType
 from ._import import ImportableFactory, ImportOption
 
-__all__ = "ModuleLoader"
+__all__ = ("ModuleLoader", "ModuleLoaderSetting")
 
 
 class __Private:
