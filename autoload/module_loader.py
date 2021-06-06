@@ -87,6 +87,10 @@ class ModuleLoader:
     def base_path(self) -> str:
         return self.__base_path
 
+    @property
+    def strict(self) -> bool:
+        return self.__strict
+
     def load_class(self, file_name: str) -> Type:
         """Import Python module and return class.
         :param file_name: Python file name (Module name).
