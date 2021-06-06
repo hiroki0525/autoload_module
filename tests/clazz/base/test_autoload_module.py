@@ -28,8 +28,24 @@ from tests.clazz.packageA.packageB.module_b3 import ModuleB3
 class TestAutoLoadModule(unittest.TestCase):
 
     def setUp(self):
-        print('setup')
         self.loader = ModuleLoader()
+
+    def tearDown(self) -> None:
+        ModuleLoader.set_setting()
+
+    def test_global_setting(self):
+        default = self.loader
+        test_cases = (
+            ((), (default.base_path, default.strict)),
+            (('/',), ('/', default.strict)),
+            ((None, True), (default.base_path, True)),
+            (('/', False), ('/', False)),
+        )
+        for setting, expected in test_cases:
+            with self.subTest(setting=setting):
+                ModuleLoader.set_setting(*setting)
+                test_loader = ModuleLoader()
+                self.assertTupleEqual((test_loader.base_path, test_loader.strict), expected)
 
     def test_initialize(self):
         test_cases = (

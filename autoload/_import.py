@@ -36,9 +36,12 @@ class ImportOption:
     is_strict: bool = False
 
 
+default_option = ImportOption()
+
+
 class Importable(ABC):
     def __init__(
-        self, path: str, context: Context, option: ImportOption = ImportOption()
+        self, path: str, context: Context, option: ImportOption = default_option
     ):
         self._path = _exclude_py(path)
         self._context = context

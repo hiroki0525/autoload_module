@@ -71,6 +71,23 @@ loader = ModuleLoader('/user/local/src/custom')
 
 About strict parameter, please see [here](#NOTE) .
 
+You can also create global setting.
+```python
+from autoload import ModuleLoader
+import os
+
+# global setting
+ModuleLoader.set_setting(base_path=os.getcwd(), strict=True)
+
+loader_a = ModuleLoader()
+loader_b = ModuleLoader()
+
+print(loader_a.base_path)
+# -> /Users/user1/abc
+print(loader_b.base_path)
+# -> /Users/user1/abc
+```
+
 ### Methods
 #### load_classes
 ```
