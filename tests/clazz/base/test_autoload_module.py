@@ -45,7 +45,9 @@ class TestAutoLoadModule(unittest.TestCase):
             with self.subTest(setting=setting):
                 ModuleLoader.set_setting(*setting)
                 test_loader = ModuleLoader()
+                test_loader2 = ModuleLoader()
                 self.assertTupleEqual((test_loader.base_path, test_loader.strict), expected)
+                self.assertTupleEqual((test_loader2.base_path, test_loader2.strict), expected)
 
     def test_initialize(self):
         test_cases = (
