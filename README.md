@@ -71,7 +71,7 @@ loader = ModuleLoader('/user/local/src/custom')
 
 About strict parameter, please see [here](#NOTE) .
 
-You can also create global setting.
+You can also create global setting and initialize singleton object.
 ```python
 from autoload import ModuleLoader
 import os
@@ -86,6 +86,19 @@ print(loader_a.base_path)
 # -> /Users/user1/abc
 print(loader_b.base_path)
 # -> /Users/user1/abc
+
+# singleton setting
+ModuleLoader.set_setting(singleton=True)
+
+loader_c = ModuleLoader()
+loader_d = ModuleLoader()
+loader_e = ModuleLoader('/test')
+
+assert loader_c is loader_d # OK
+assert loader_c is loader_e # OK
+
+# The base_path is '/Users/user1/abc'
+assert loader_c.base_path is loader_e.base_path # OK
 ```
 
 ### Methods
