@@ -53,18 +53,32 @@ def _access_private():
 class ModuleLoaderSetting:
     base_path: Optional[str] = None
     strict: bool = False
+    singleton: bool = False
 
 
 class ModuleLoader:
     _setting: ClassVar[ModuleLoaderSetting] = ModuleLoaderSetting()
+    _instance: Optional["ModuleLoader"] = None
 
     @classmethod
     def get_setting(cls) -> ModuleLoaderSetting:
         return cls._setting
 
     @classmethod
-    def set_setting(cls, base_path: Optional[str] = None, strict: bool = False) -> None:
-        cls._setting = ModuleLoaderSetting(base_path, strict)
+    def set_setting(
+        cls,
+        base_path: Optional[str] = None,
+        strict: bool = False,
+        singleton: bool = False,
+    ) -> None:
+        cls._setting = ModuleLoaderSetting(base_path, strict, singleton)
+
+    def __new__(cls, *args, **kwargs):
+        if cls._setting.singleton is False:
+            return super(ModuleLoader, cls).__new__(cls)
+        if cls._instance is None:
+            cls._instance = super(ModuleLoader, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self, base_path: Optional[str] = None, strict: Optional[bool] = None):
         """initialize
@@ -75,6 +89,8 @@ class ModuleLoader:
             per a Python module on a basis of its name.
         """
         setting = ModuleLoader._setting
+        if setting.singleton is True and hasattr(self, "_ModuleLoader__base_path"):
+            return
         global_base_path, global_strict = setting.base_path, setting.strict
         self.__base_path: str = (
             _access_private().init_base_url(base_path)

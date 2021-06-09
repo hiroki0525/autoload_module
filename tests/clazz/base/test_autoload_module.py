@@ -49,6 +49,30 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertTupleEqual((test_loader.base_path, test_loader.strict), expected)
                 self.assertTupleEqual((test_loader2.base_path, test_loader2.strict), expected)
 
+    def test_singleton(self):
+        ModuleLoader.set_setting(singleton=True)
+        test_cases = (
+            (ModuleLoader(), ModuleLoader()),
+            (ModuleLoader('/test', strict=True), ModuleLoader()),
+        )
+        for instance, expected in test_cases:
+            with self.subTest(instance=instance):
+                self.assertIs(instance, expected)
+                self.assertEqual(instance.base_path, expected.base_path)
+                self.assertEqual(instance.strict, expected.strict)
+
+    def test_not_singleton(self):
+        test_cases = (
+            (ModuleLoader(), ModuleLoader(), False),
+            (ModuleLoader('/test', strict=True), ModuleLoader(), True),
+        )
+        for instance, expected, optional in test_cases:
+            with self.subTest(instance=instance):
+                self.assertIsNot(instance, expected)
+                if optional:
+                    self.assertNotEqual(instance.base_path, expected.base_path)
+                    self.assertNotEqual(instance.strict, expected.strict)
+
     def test_initialize(self):
         test_cases = (
             (ModuleLoader('').base_path, '/'),
