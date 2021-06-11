@@ -87,6 +87,15 @@ class ModuleLoader:
         base_path, strict = list(args) + [None] * (cls._INSTANCE_VAL_COUNT - len(args))
         base_path = kwargs.get("base_path") if base_path is None else base_path
         strict = kwargs.get("strict") if strict is None else strict
+        if base_path is None:
+            global_base_path = cls._setting.base_path
+            base_path = (
+                _access_private().init_base_url(base_path)
+                if global_base_path is None
+                else global_base_path
+            )
+        if strict is None:
+            strict = cls._setting.strict
         ci = cls._instance
         if ci.base_path != base_path and ci.strict != strict:
             raise LoaderStrictModeError(

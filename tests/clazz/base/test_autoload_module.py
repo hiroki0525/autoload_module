@@ -61,6 +61,18 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertEqual(instance.base_path, expected.base_path)
                 self.assertEqual(instance.strict, expected.strict)
 
+    def test_singleton_with_strict(self):
+        ModuleLoader.set_setting(singleton=True, strict=True)
+        singleton = ModuleLoader()
+        test_cases = (
+            lambda: ModuleLoader('/test'),
+            lambda: ModuleLoader('/test', strict=False),
+            lambda: ModuleLoader(strict=True),
+        )
+        for initialize in test_cases:
+            with self.assertRaises(LoaderStrictModeError):
+                initialize()
+
     def test_not_singleton(self):
         test_cases = (
             (ModuleLoader(), ModuleLoader(), False),
