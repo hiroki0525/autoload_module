@@ -49,6 +49,17 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertTupleEqual((test_loader.base_path, test_loader.strict), expected)
                 self.assertTupleEqual((test_loader2.base_path, test_loader2.strict), expected)
 
+    def test_switch_global_setting(self):
+        ModuleLoader.set_setting(singleton=True)
+        singleton_a = ModuleLoader()
+        singleton_b = ModuleLoader()
+        ModuleLoader.set_setting()
+        no_singleton_a = ModuleLoader()
+        no_singleton_b = ModuleLoader()
+        self.assertIs(singleton_a, singleton_b)
+        self.assertIsNot(singleton_a, no_singleton_a)
+        self.assertIsNot(no_singleton_a, no_singleton_b)
+
     def test_singleton(self):
         ModuleLoader.set_setting(singleton=True)
         test_cases = (
