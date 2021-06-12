@@ -10,6 +10,8 @@ from ._import import ImportableFactory, ImportOption
 
 __all__ = ("ModuleLoader", "ModuleLoaderSetting")
 
+from .exception import LoaderStrictModeError
+
 
 class __Private:
     """Private namespace.
@@ -59,6 +61,7 @@ class ModuleLoaderSetting:
 class ModuleLoader:
     _setting: ClassVar[ModuleLoaderSetting] = ModuleLoaderSetting()
     _instance: Optional["ModuleLoader"] = None
+    _INSTANCE_VAL_COUNT = 2
 
     @classmethod
     def get_setting(cls) -> ModuleLoaderSetting:
@@ -75,9 +78,32 @@ class ModuleLoader:
 
     def __new__(cls, *args, **kwargs):
         if cls._setting.singleton is False:
+            cls._instance = None
             return super(ModuleLoader, cls).__new__(cls)
         if cls._instance is None:
             cls._instance = super(ModuleLoader, cls).__new__(cls)
+            return cls._instance
+        if cls._setting.strict is False:
+            return cls._instance
+        base_path, strict = list(args) + [None] * (cls._INSTANCE_VAL_COUNT - len(args))
+        base_path = kwargs.get("base_path") if base_path is None else base_path
+        strict = kwargs.get("strict") if strict is None else strict
+        if base_path is None:
+            global_base_path = cls._setting.base_path
+            base_path = (
+                _access_private().init_base_url(base_path)
+                if global_base_path is None
+                else global_base_path
+            )
+        if strict is None:
+            strict = cls._setting.strict
+        ci = cls._instance
+        if ci.base_path != base_path or ci.strict != strict:
+            raise LoaderStrictModeError(
+                "Now singleton setting. "
+                "You have already initialized object that has some attributes. "
+                "Please check constructor variables."
+            )
         return cls._instance
 
     def __init__(self, base_path: Optional[str] = None, strict: Optional[bool] = None):

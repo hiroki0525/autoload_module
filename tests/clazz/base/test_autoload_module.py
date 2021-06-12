@@ -49,6 +49,17 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertTupleEqual((test_loader.base_path, test_loader.strict), expected)
                 self.assertTupleEqual((test_loader2.base_path, test_loader2.strict), expected)
 
+    def test_switch_global_setting(self):
+        ModuleLoader.set_setting(singleton=True)
+        singleton_a = ModuleLoader()
+        singleton_b = ModuleLoader()
+        ModuleLoader.set_setting()
+        no_singleton_a = ModuleLoader()
+        no_singleton_b = ModuleLoader()
+        self.assertIs(singleton_a, singleton_b)
+        self.assertIsNot(singleton_a, no_singleton_a)
+        self.assertIsNot(no_singleton_a, no_singleton_b)
+
     def test_singleton(self):
         ModuleLoader.set_setting(singleton=True)
         test_cases = (
@@ -60,6 +71,19 @@ class TestAutoLoadModule(unittest.TestCase):
                 self.assertIs(instance, expected)
                 self.assertEqual(instance.base_path, expected.base_path)
                 self.assertEqual(instance.strict, expected.strict)
+
+    def test_singleton_with_strict(self):
+        ModuleLoader.set_setting(singleton=True, strict=True)
+        singleton = ModuleLoader()
+        test_cases = (
+            ('/test',),
+            ('/test', {"strict": False},),
+            ({"strict": True},),
+        )
+        for args in test_cases:
+            with self.subTest(args=args):
+                with self.assertRaises(LoaderStrictModeError, msg="Now singleton setting."):
+                    ModuleLoader(*args)
 
     def test_not_singleton(self):
         test_cases = (
@@ -240,17 +264,13 @@ class TestAutoLoadModule(unittest.TestCase):
     def test_strict_mode_raise_error(self):
         self.loader = ModuleLoader(strict=True)
         test_cases = (
-            "packageD",
-            "packageD.module_d1"
+            ("packageD", "Loader can't load 'ModuleD6' in module_d3 module.",),
+            ("packageD.module_d1", "Loader can only load a 'ModuleD1' class in module_d1 module.",)
         )
-        for pkg_name in test_cases:
-            with self.assertRaises(LoaderStrictModeError):
-                try:
+        for pkg_name, msg in test_cases:
+            with self.subTest(pkg_name=pkg_name):
+                with self.assertRaises(LoaderStrictModeError):
                     self.loader.load_classes(pkg_name)
-                except LoaderStrictModeError as e:
-                    # check message
-                    print(e)
-                    raise e
 
 
 if __name__ == '__main__':
