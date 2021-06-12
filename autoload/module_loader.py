@@ -78,6 +78,7 @@ class ModuleLoader:
 
     def __new__(cls, *args, **kwargs):
         if cls._setting.singleton is False:
+            cls._instance = None
             return super(ModuleLoader, cls).__new__(cls)
         if cls._instance is None:
             cls._instance = super(ModuleLoader, cls).__new__(cls)
@@ -97,10 +98,10 @@ class ModuleLoader:
         if strict is None:
             strict = cls._setting.strict
         ci = cls._instance
-        if ci.base_path != base_path and ci.strict != strict:
+        if ci.base_path != base_path or ci.strict != strict:
             raise LoaderStrictModeError(
-                "Now singleton setting."
-                "You have already initialized object that has some attributes."
+                "Now singleton setting. "
+                "You have already initialized object that has some attributes. "
                 "Please check constructor variables."
             )
         return cls._instance

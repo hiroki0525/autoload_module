@@ -65,13 +65,14 @@ class TestAutoLoadModule(unittest.TestCase):
         ModuleLoader.set_setting(singleton=True, strict=True)
         singleton = ModuleLoader()
         test_cases = (
-            lambda: ModuleLoader('/test'),
-            lambda: ModuleLoader('/test', strict=False),
-            lambda: ModuleLoader(strict=True),
+            ('/test',),
+            ('/test', {"strict": False},),
+            ({"strict": True},),
         )
-        for initialize in test_cases:
-            with self.assertRaises(LoaderStrictModeError):
-                initialize()
+        for args in test_cases:
+            with self.subTest(args=args):
+                with self.assertRaises(LoaderStrictModeError, msg="Now singleton setting."):
+                    ModuleLoader(*args)
 
     def test_not_singleton(self):
         test_cases = (
@@ -252,17 +253,13 @@ class TestAutoLoadModule(unittest.TestCase):
     def test_strict_mode_raise_error(self):
         self.loader = ModuleLoader(strict=True)
         test_cases = (
-            "packageD",
-            "packageD.module_d1"
+            ("packageD", "Loader can't load 'ModuleD6' in module_d3 module.",),
+            ("packageD.module_d1", "Loader can only load a 'ModuleD1' class in module_d1 module.",)
         )
-        for pkg_name in test_cases:
-            with self.assertRaises(LoaderStrictModeError):
-                try:
+        for pkg_name, msg in test_cases:
+            with self.subTest(pkg_name=pkg_name):
+                with self.assertRaises(LoaderStrictModeError):
                     self.loader.load_classes(pkg_name)
-                except LoaderStrictModeError as e:
-                    # check message
-                    print(e)
-                    raise e
 
 
 if __name__ == '__main__':
