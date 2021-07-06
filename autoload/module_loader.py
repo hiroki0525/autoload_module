@@ -1,5 +1,4 @@
 import inspect
-import warnings
 from dataclasses import dataclass
 from os import path as os_path
 from typing import Callable, ClassVar, Iterable, List, Optional, Tuple, Type
@@ -151,11 +150,9 @@ class ModuleLoader:
 
     def load_classes(
         self,
-        src: Optional[str] = None,  # Temporary Optional because of pkg_name
+        src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-        *args,
-        **kwargs,
     ) -> Tuple[Type, ...]:
         """Import Python package and return classes.
         :param src: Python package or module name.
@@ -164,12 +161,6 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
-        pkg_name = kwargs.get("pkg_name")
-        if kwargs.get("pkg_name") is not None:
-            warnings.warn(
-                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
-            )
-            src = pkg_name
         if src is None:
             raise TypeError("'src' parameter is required.")
         return self.__load_resources(
@@ -181,7 +172,7 @@ class ModuleLoader:
 
     def load_functions(
         self,
-        src: Optional[str] = None,  # Temporary Optional because of pkg_name
+        src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
         *args,
@@ -194,12 +185,6 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: function objects defined in the Python package according to rules.
         """
-        pkg_name = kwargs.get("pkg_name")
-        if kwargs.get("pkg_name") is not None:
-            warnings.warn(
-                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
-            )
-            src = pkg_name
         if src is None:
             raise TypeError("'src' parameter is required.")
         return self.__load_resources(
