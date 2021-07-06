@@ -138,6 +138,8 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: class object defined in the Python file (Module) according to rules.
         """
+        if file_name is None:
+            raise TypeError("'file_name' parameter is required.")
         return self.__load_resource(file_name, ContextFactory.get(LoadType.clazz))
 
     def load_function(self, file_name: str) -> Callable:
@@ -146,6 +148,8 @@ class ModuleLoader:
             You can input relative path like '../example' based on 'base_path'.
         :return: function object defined in the Python file (Module) according to rules.
         """
+        if file_name is None:
+            raise TypeError("'file_name' parameter is required.")
         return self.__load_resource(file_name, ContextFactory.get(LoadType.func))
 
     def load_classes(
