@@ -1,4 +1,4 @@
-from tests.clazz.test_module import TestModule
+from tests.clazz.testmodule import TestModule
 
 
 class ExpectedNotLoad(TestModule):

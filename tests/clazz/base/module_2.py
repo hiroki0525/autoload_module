@@ -1,6 +1,6 @@
 from autoload import load_config
 
-from tests.clazz.test_module import TestModule
+from tests.clazz.testmodule import TestModule
 
 
 @load_config(load=False)
