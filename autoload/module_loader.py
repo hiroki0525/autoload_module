@@ -175,8 +175,6 @@ class ModuleLoader:
         src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-        *args,
-        **kwargs,
     ) -> Tuple[Callable, ...]:
         """Import Python package and return functions.
         :param src: Python package or module name.
