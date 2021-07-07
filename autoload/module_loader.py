@@ -268,21 +268,21 @@ class ModuleLoader:
         target_dir = self.__path_fix(src)
         importable = ImportableFactory.get(target_dir, context, import_option)
         mods: List[Class_Or_Func] = importable.import_resources()
-        order_val = DecoratorVal.order.value
+        order_attr = DecoratorVal.order.value
         has_order_mods = [
-            mod for mod in mods if hasattr(mod, order_val) and getattr(mod, order_val)
+            mod for mod in mods if hasattr(mod, order_attr) and getattr(mod, order_attr)
         ]
         if not has_order_mods:
             return tuple(mods)
         no_has_order_mods = [
             mod
             for mod in mods
-            if not hasattr(mod, order_val) or not getattr(mod, order_val)
+            if not hasattr(mod, order_attr) or not getattr(mod, order_attr)
         ]
         if not no_has_order_mods:
-            return tuple(sorted(has_order_mods, key=lambda m: getattr(m, order_val)))
+            return tuple(sorted(has_order_mods, key=lambda m: getattr(m, order_attr)))
         ordered_mods = (
-            sorted(has_order_mods, key=lambda m: getattr(m, order_val))
+            sorted(has_order_mods, key=lambda m: getattr(m, order_attr))
             + no_has_order_mods
         )
         return tuple(ordered_mods)
