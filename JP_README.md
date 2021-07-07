@@ -62,7 +62,7 @@ loader = ModuleLoader('/user/local/src/custom')
 ### Methods
 #### load_classes
 ```
-load_classes(pkg_name, [excludes])
+load_classes(src, [excludes])
 ```
 引数で与えられたパッケージ名から配下のモジュールをimportし、クラスオブジェクトのタプルを返却します。
 - Directory
@@ -150,7 +150,7 @@ loader.load_classes("..otherpkg")
 
 #### load_functions
 ```
-load_functions(pkg_name, [excludes])
+load_functions(src, [excludes])
 ```
 引数で与えられたパッケージ名から配下のモジュールをimportし、関数オブジェクトのタプルを返却します。
 使い方は `load_classes` と同じです。

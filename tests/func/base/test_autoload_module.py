@@ -54,9 +54,9 @@ class TestAutoLoadModule(unittest.TestCase):
             (".packageD.package_d_func1", {package_d_func1(), multiple2(), multiple3()}),
             (".packageD.package_d_func2", {multiple4(), multiple5()}),
         )
-        for pkg_name, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name):
-                classes = self.loader.load_functions(pkg_name)
+        for src, expected in test_cases:
+            with self.subTest(src=src):
+                classes = self.loader.load_functions(src)
                 instances = set([clazz() for clazz in classes])
                 self.assertSetEqual(instances, expected)
 
@@ -69,9 +69,9 @@ class TestAutoLoadModule(unittest.TestCase):
             (".", ["func3", "func2"], {func1()}),
             (".", ("func3", "func2"), {func1()}),
         )
-        for pkg_name, excludes, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, excludes=excludes):
-                functions = self.loader.load_functions(pkg_name=pkg_name, excludes=excludes)
+        for src, excludes, expected in test_cases:
+            with self.subTest(src=src, excludes=excludes):
+                functions = self.loader.load_functions(src=src, excludes=excludes)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
 
@@ -80,9 +80,9 @@ class TestAutoLoadModule(unittest.TestCase):
         test_cases = (
             ("../packageA/packageB", None, pkgB_result),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for src, exclude, expected in test_cases:
+            with self.subTest(src=src, exclude=exclude):
+                functions = self.loader.load_functions(src, exclude)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
 
@@ -92,9 +92,9 @@ class TestAutoLoadModule(unittest.TestCase):
         test_cases = (
             ("../packageA/", None, pkgA_result),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for src, exclude, expected in test_cases:
+            with self.subTest(src=src, exclude=exclude):
+                functions = self.loader.load_functions(src, exclude)
                 results = [function() for function in functions]
                 if not results[0] == expected[0]:
                     self.fail()
@@ -107,9 +107,9 @@ class TestAutoLoadModule(unittest.TestCase):
             ("", None, basepkg_result),
             ("./", ("func3", "func2"), {func1()}),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for src, exclude, expected in test_cases:
+            with self.subTest(src=src, exclude=exclude):
+                functions = self.loader.load_functions(src, exclude)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
 
@@ -119,9 +119,9 @@ class TestAutoLoadModule(unittest.TestCase):
             ("packageC", [], pkgC_result),
             ("packageC", ["package_c_func2"], (package_c_func3(), package_c_func1())),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for src, exclude, expected in test_cases:
+            with self.subTest(src=src, exclude=exclude):
+                functions = self.loader.load_functions(src, exclude)
                 results = tuple([function() for function in functions])
                 self.assertTupleEqual(results, expected)
 
@@ -131,9 +131,9 @@ class TestAutoLoadModule(unittest.TestCase):
             (".", 123),
             (".", [1, 2, 3]),
         )
-        for pkg_name, exclude in test_cases:
+        for src, exclude in test_cases:
             with self.assertRaises(Exception):
-                self.loader.load_functions(pkg_name, exclude)
+                self.loader.load_functions(src, exclude)
 
     def test_load_functions_recursive(self):
         pkgA_result = {package_a_func2(), package_a_func3(), package_a_func1()}
@@ -143,9 +143,9 @@ class TestAutoLoadModule(unittest.TestCase):
             # expected packageA is ordered, B is random.
             ("../packageA", True, pkgA_result | pkgB_result),
         )
-        for pkg_name, recursive, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, recursive=recursive):
-                functions = self.loader.load_functions(pkg_name, recursive=recursive)
+        for src, recursive, expected in test_cases:
+            with self.subTest(src=src, recursive=recursive):
+                functions = self.loader.load_functions(src, recursive=recursive)
                 instances = set([function() for function in functions])
                 self.assertSetEqual(instances, expected)
 
@@ -154,9 +154,9 @@ class TestAutoLoadModule(unittest.TestCase):
         test_cases = (
             ("packageD", None, basepkg_result),
         )
-        for pkg_name, exclude, expected in test_cases:
-            with self.subTest(pkg_name=pkg_name, exclude=exclude):
-                functions = self.loader.load_functions(pkg_name, exclude)
+        for src, exclude, expected in test_cases:
+            with self.subTest(src=src, exclude=exclude):
+                functions = self.loader.load_functions(src, exclude)
                 results = set([function() for function in functions])
                 self.assertSetEqual(results, expected)
 
@@ -173,10 +173,10 @@ class TestAutoLoadModule(unittest.TestCase):
             "packageD",
             "packageD.package_d_func1"
         )
-        for pkg_name in test_cases:
+        for src in test_cases:
             with self.assertRaises(LoaderStrictModeError):
                 try:
-                    self.loader.load_functions(pkg_name)
+                    self.loader.load_functions(src)
                 except LoaderStrictModeError as e:
                     # check message
                     print(e)

@@ -1,6 +1,7 @@
 # autoload_module
 [![PyPI version](https://badge.fury.io/py/autoload-module.svg)](https://badge.fury.io/py/autoload-module)
 [![Test](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml/badge.svg)](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml)
+[![Downloads](https://pepy.tech/badge/autoload-module)](https://pepy.tech/project/autoload-module)
 <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat" alt="MIT License image">
 
 This library will give you comfortable Python metaprogramming.  
@@ -112,12 +113,6 @@ load_classes(
 ```
 This method read the Python package or module and return the tuple of class objects.
 
-**NOTE**
-
-From version 1.5.0, `pkg_name` parameter is duplicated.
-It will be deleted soon. 
-`load_functions` is also same.
-
 - Directory
 ```
 pkg/
@@ -190,7 +185,7 @@ validator_classes = loader.load_classes("main", recursive=True)
 # -> validateD!!
 # -> validateE!!
 ```
-You can specify `pkg_name` as below.
+You can specify `src` as below.
 ```python
 loader.load_classes("main/validator_a.py")
 loader.load_classes("main.validator_a")
