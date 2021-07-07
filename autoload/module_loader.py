@@ -241,6 +241,8 @@ class ModuleLoader:
     def __load_resource(self, file_name: str, context: Context) -> Class_Or_Func:
         if file_name is None:
             raise TypeError("'file_name' parameter is required.")
+        if not isinstance(file_name, str):
+            raise TypeError("file_name variable must be string.")
         fix_path = self.__path_fix(file_name)
         importable = ImportableFactory.get(fix_path, context)
         return importable.import_resources()[0]
@@ -254,6 +256,8 @@ class ModuleLoader:
     ) -> Tuple[Class_Or_Func, ...]:
         if src is None:
             raise TypeError("'src' parameter is required.")
+        if not isinstance(src, str):
+            raise TypeError("src variable must be string.")
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
         exclude_files.append(os_path.basename(private.detect_call_path()))
