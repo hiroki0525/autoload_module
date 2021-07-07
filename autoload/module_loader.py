@@ -1,11 +1,10 @@
 import inspect
-import warnings
 from dataclasses import dataclass
 from os import path as os_path
 from typing import Callable, ClassVar, Iterable, List, Optional, Tuple, Type
 
 from ._context import Context, ContextFactory
-from ._globals import Class_Or_Func, LoadType
+from ._globals import Class_Or_Func, DecoratorVal, LoadType
 from ._import import ImportableFactory, ImportOption
 
 __all__ = ("ModuleLoader", "ModuleLoaderSetting")
@@ -115,7 +114,9 @@ class ModuleLoader:
             per a Python module on a basis of its name.
         """
         setting = ModuleLoader._setting
-        if setting.singleton is True and hasattr(self, "_ModuleLoader__base_path"):
+        if setting.singleton is True and hasattr(
+            self, f"__{self.__class__.__name__}_base_path"
+        ):
             return
         global_base_path, global_strict = setting.base_path, setting.strict
         self.__base_path: str = (
@@ -151,11 +152,9 @@ class ModuleLoader:
 
     def load_classes(
         self,
-        src: Optional[str] = None,  # Temporary Optional because of pkg_name
+        src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-        *args,
-        **kwargs,
     ) -> Tuple[Type, ...]:
         """Import Python package and return classes.
         :param src: Python package or module name.
@@ -164,14 +163,6 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
-        pkg_name = kwargs.get("pkg_name")
-        if kwargs.get("pkg_name") is not None:
-            warnings.warn(
-                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
-            )
-            src = pkg_name
-        if src is None:
-            raise TypeError("'src' parameter is required.")
         return self.__load_resources(
             src,
             excludes=excludes,
@@ -181,11 +172,9 @@ class ModuleLoader:
 
     def load_functions(
         self,
-        src: Optional[str] = None,  # Temporary Optional because of pkg_name
+        src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-        *args,
-        **kwargs,
     ) -> Tuple[Callable, ...]:
         """Import Python package and return functions.
         :param src: Python package or module name.
@@ -194,14 +183,6 @@ class ModuleLoader:
         :param recursive: If True, import Python package recursively.
         :return: function objects defined in the Python package according to rules.
         """
-        pkg_name = kwargs.get("pkg_name")
-        if kwargs.get("pkg_name") is not None:
-            warnings.warn(
-                "'pkg_name' is deprecated. Please use 'src' parameter.", FutureWarning
-            )
-            src = pkg_name
-        if src is None:
-            raise TypeError("'src' parameter is required.")
         return self.__load_resources(
             src,
             excludes=excludes,
@@ -258,6 +239,10 @@ class ModuleLoader:
         return self.__base_path + "/" + path
 
     def __load_resource(self, file_name: str, context: Context) -> Class_Or_Func:
+        if file_name is None:
+            raise TypeError("'file_name' parameter is required.")
+        if not isinstance(file_name, str):
+            raise TypeError("file_name variable must be string.")
         fix_path = self.__path_fix(file_name)
         importable = ImportableFactory.get(fix_path, context)
         return importable.import_resources()[0]
@@ -269,7 +254,10 @@ class ModuleLoader:
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> Tuple[Class_Or_Func, ...]:
-        target_dir = self.__path_fix(src)
+        if src is None:
+            raise TypeError("'src' parameter is required.")
+        if not isinstance(src, str):
+            raise TypeError("src variable must be string.")
         private = _access_private()
         exclude_files = list(private.DEFAULT_EXCLUDES)
         exclude_files.append(os_path.basename(private.detect_call_path()))
@@ -281,26 +269,24 @@ class ModuleLoader:
                     raise TypeError("The contents of the excludes must all be strings")
                 exclude_files.append(exclude)
         import_option = ImportOption(recursive, exclude_files, self.__strict)
+        target_dir = self.__path_fix(src)
         importable = ImportableFactory.get(target_dir, context, import_option)
         mods: List[Class_Or_Func] = importable.import_resources()
+        order_attr = DecoratorVal.order.value
         has_order_mods = [
-            mod
-            for mod in mods
-            if hasattr(mod, "_load_order") and getattr(mod, "_load_order")
+            mod for mod in mods if hasattr(mod, order_attr) and getattr(mod, order_attr)
         ]
         if not has_order_mods:
             return tuple(mods)
         no_has_order_mods = [
             mod
             for mod in mods
-            if not hasattr(mod, "_load_order") or not getattr(mod, "_load_order")
+            if not hasattr(mod, order_attr) or not getattr(mod, order_attr)
         ]
         if not no_has_order_mods:
-            return tuple(
-                sorted(has_order_mods, key=lambda m: getattr(m, "_load_order"))
-            )
+            return tuple(sorted(has_order_mods, key=lambda m: getattr(m, order_attr)))
         ordered_mods = (
-            sorted(has_order_mods, key=lambda m: getattr(m, "_load_order"))
+            sorted(has_order_mods, key=lambda m: getattr(m, order_attr))
             + no_has_order_mods
         )
         return tuple(ordered_mods)

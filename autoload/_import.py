@@ -8,7 +8,7 @@ from sys import path as sys_path
 from typing import Iterable, List
 
 from ._context import Context
-from ._globals import Class_Or_Func
+from ._globals import Class_Or_Func, DecoratorVal
 from .exception import LoaderStrictModeError
 
 
@@ -24,9 +24,6 @@ def _exclude_py(path: str) -> str:
 
 def _exclude_ex(file_name: str) -> str:
     return os_path.splitext(file_name)[0]
-
-
-_DECORATOR_ATTR = "_load_flg"
 
 
 @dataclass(frozen=True)
@@ -75,10 +72,11 @@ class _Module(Importable):
         error = None
         mods = []
         members = inspect.getmembers(module, context.predicate())
+        load_flg_attr = DecoratorVal.flg.value
         for mod_name, mod in members:
             is_name_match = target_load_name == mod_name
-            if hasattr(mod, _DECORATOR_ATTR):
-                if not getattr(mod, _DECORATOR_ATTR):
+            if hasattr(mod, load_flg_attr):
+                if not getattr(mod, load_flg_attr):
                     continue
                 if is_found:
                     # High priority error

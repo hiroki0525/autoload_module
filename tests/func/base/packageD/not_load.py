@@ -1,4 +1,4 @@
-from tests.func.test_function import test_function
+from tests.func.testfunction import test_function
 
 
 @test_function
