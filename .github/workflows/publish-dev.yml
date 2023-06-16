@@ -23,3 +23,7 @@ jobs:
           poetry publish -r testpypi --build
         env:
           POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_TOKEN }}
+      - name: Test after Publish
+        run: |
+          pip install -i https://test.pypi.org/simple/ autoload-module
+          python -m unittest -v
