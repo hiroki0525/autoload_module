@@ -14,10 +14,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           cache: 'poetry'
-      - name: Install poetry And Publish
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Publish
         run: |
-          curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-          source $HOME/.poetry/env
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry publish -r testpypi --build
         env:
