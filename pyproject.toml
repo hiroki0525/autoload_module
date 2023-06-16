@@ -28,10 +28,6 @@ packages = [
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.9.2"
-black = "^21.5b1"
-isort = "^5.8.0"
-mypy = "^0.812"
 pre-commit = "^2.12.1"
 
 [build-system]
