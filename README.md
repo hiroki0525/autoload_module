@@ -109,7 +109,7 @@ load_classes(
     src: str,
     excludes: Iterable[str] = (),
     recursive: bool = False,
-) -> Tuple[Type]:
+) -> Tuple[Type, ...]:
 ```
 This method read the Python package or module and return the tuple of class objects.
 
@@ -203,7 +203,7 @@ load_functions(
     src: str,
     excludes: Iterable[str] = (),
     recursive: bool = False,
-) -> Tuple[Callable]:
+) -> Tuple[Callable, ...]:
 ```
 This method read the Python package or module and return the tuple of functions.
 The usage is the same as `load_classes`.

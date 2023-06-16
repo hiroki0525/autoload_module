@@ -12,7 +12,7 @@ __all__ = ("ModuleLoader", "ModuleLoaderSetting")
 from .exception import LoaderStrictModeError
 
 
-class __Private:
+class _Private:
     """Private namespace.
     If you do not want to expose, define here as much as possible.
     """
@@ -44,10 +44,6 @@ class __Private:
         if base_path.endswith("/"):
             return base_path[:-1]
         return base_path
-
-
-def _access_private():
-    return __Private
 
 
 @dataclass(frozen=True)
@@ -90,7 +86,7 @@ class ModuleLoader:
         if base_path is None:
             global_base_path = cls._setting.base_path
             base_path = (
-                _access_private().init_base_url(base_path)
+                _Private.init_base_url(base_path)
                 if global_base_path is None
                 else global_base_path
             )
@@ -120,7 +116,7 @@ class ModuleLoader:
             return
         global_base_path, global_strict = setting.base_path, setting.strict
         self.__base_path: str = (
-            _access_private().init_base_url(base_path)
+            _Private.init_base_url(base_path)
             if global_base_path is None
             else global_base_path
         )
@@ -258,9 +254,8 @@ class ModuleLoader:
             raise TypeError("'src' parameter is required.")
         if not isinstance(src, str):
             raise TypeError("src variable must be string.")
-        private = _access_private()
-        exclude_files = list(private.DEFAULT_EXCLUDES)
-        exclude_files.append(os_path.basename(private.detect_call_path()))
+        exclude_files = list(_Private.DEFAULT_EXCLUDES)
+        exclude_files.append(os_path.basename(_Private.detect_call_path()))
         if excludes:
             if not iter(excludes):
                 raise TypeError("excludes variable must be iterable.")
