@@ -8,17 +8,22 @@ on:
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.7'
-      - name: Install poetry And Publish
+        uses: actions/setup-python@v4
+      #        with:
+      #          cache: 'poetry'
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Publish
         run: |
-          curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-          source $HOME/.poetry/env
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry publish -r testpypi --build
         env:
           POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_TOKEN }}
+      - name: Test after Publish
+        run: |
+          pip install -i https://test.pypi.org/simple/ autoload-module
+          python -m unittest -v

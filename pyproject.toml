@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autoload-module"
-version = "1.7.2"
+version = "2.0.0"
 description = "Python Autoload Module"
 authors = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
 license = "MIT"
@@ -25,14 +25,10 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.9.2"
-black = "^21.5b1"
-isort = "^5.8.0"
-mypy = "^0.812"
-pre-commit = "^2.12.1"
+pre-commit = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
