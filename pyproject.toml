@@ -45,4 +45,6 @@ exclude = ["tests"]
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D213"]
+# Disable D203 and D213 because they contradict D211 and D212
+# Disable FBT001 and FBT002 because existing interfaces would be affected.
+ignore = ["D203", "D213", "FBT001", "FBT002"]

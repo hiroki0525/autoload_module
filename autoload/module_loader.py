@@ -82,7 +82,6 @@ class ModuleLoader:
     @classmethod
     def set_setting(
         cls,
-        *,
         base_path: str | None = None,
         strict: bool = False,
         singleton: bool = False,
@@ -190,7 +189,6 @@ class ModuleLoader:
     def load_classes(
         self,
         src: str,
-        *,
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> tuple[type, ...]:
@@ -215,7 +213,6 @@ class ModuleLoader:
     def load_functions(
         self,
         src: str,
-        *,
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> tuple[Callable, ...]:
@@ -296,7 +293,6 @@ class ModuleLoader:
         self,
         src: str,
         context: Context,
-        *,
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> tuple[Class_Or_Func, ...]:
