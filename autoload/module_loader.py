@@ -1,7 +1,8 @@
 import inspect
+from collections.abc import Iterable
 from dataclasses import dataclass
 from os import path as os_path
-from typing import Callable, ClassVar, Iterable, List, Optional, Tuple, Type
+from typing import Callable, ClassVar, List, Optional, Tuple, Type
 
 from ._context import Context, ContextFactory
 from ._globals import Class_Or_Func, DecoratorVal, LoadType
@@ -11,39 +12,30 @@ __all__ = ("ModuleLoader", "ModuleLoaderSetting")
 
 from .exception import LoaderStrictModeError
 
+__THIS_FILE = os_path.basename(__file__)
+_DEFAULT_EXCLUDES = ("__init__.py", __THIS_FILE, "__pycache__")
 
-class _Private:
-    """Private namespace.
-    If you do not want to expose, define here as much as possible.
-    """
 
-    THIS_FILE = os_path.basename(__file__)
-    DEFAULT_EXCLUDES = ("__init__.py", THIS_FILE, "__pycache__")
+def _detect_call_path():
+    this_file = __THIS_FILE
+    stack = inspect.stack()
+    for path in stack:
+        path_name = path.filename
+        if this_file == os_path.basename(path_name):
+            continue
+        return path_name
 
-    def __new__(cls, *args, **kwargs):
-        raise Exception(f"{cls.__name__} can't be initialized.")
 
-    @classmethod
-    def detect_call_path(cls):
-        this_file = cls.THIS_FILE
-        stack = inspect.stack()
-        for path in stack:
-            path_name = path.filename
-            if this_file == os_path.basename(path_name):
-                continue
-            return path_name
-
-    @classmethod
-    def init_base_url(cls, base_path: Optional[str] = None):
-        if base_path is None:
-            return cls.init_base_url(os_path.dirname(cls.detect_call_path()))
-        if base_path == "/":
-            return base_path
-        if base_path == "":
-            return "/"
-        if base_path.endswith("/"):
-            return base_path[:-1]
+def _init_base_url(base_path: Optional[str] = None):
+    if base_path is None:
+        return _init_base_url(os_path.dirname(_detect_call_path()))
+    if base_path == "/":
         return base_path
+    if base_path == "":
+        return "/"
+    if base_path.endswith("/"):
+        return base_path[:-1]
+    return base_path
 
 
 @dataclass(frozen=True)
@@ -86,7 +78,7 @@ class ModuleLoader:
         if base_path is None:
             global_base_path = cls._setting.base_path
             base_path = (
-                _Private.init_base_url(base_path)
+                _init_base_url(base_path)
                 if global_base_path is None
                 else global_base_path
             )
@@ -97,7 +89,7 @@ class ModuleLoader:
             raise LoaderStrictModeError(
                 "Now singleton setting. "
                 "You have already initialized object that has some attributes. "
-                "Please check constructor variables."
+                "Please check constructor variables.",
             )
         return cls._instance
 
@@ -111,12 +103,12 @@ class ModuleLoader:
         """
         setting = ModuleLoader._setting
         if setting.singleton is True and hasattr(
-            self, f"__{self.__class__.__name__}_base_path"
+            self, f"__{self.__class__.__name__}_base_path",
         ):
             return
         global_base_path, global_strict = setting.base_path, setting.strict
         self.__base_path: str = (
-            _Private.init_base_url(base_path)
+            _init_base_url(base_path)
             if global_base_path is None
             else global_base_path
         )
@@ -219,7 +211,7 @@ class ModuleLoader:
             if path is not None:
                 base_path_arr = self.__base_path.split("/")
                 result_base_path = "/".join(
-                    base_path_arr[0 : len(base_path_arr) - level]
+                    base_path_arr[0 : len(base_path_arr) - level],
                 )
                 if path.startswith("/"):
                     if path.endswith("/"):
@@ -254,8 +246,8 @@ class ModuleLoader:
             raise TypeError("'src' parameter is required.")
         if not isinstance(src, str):
             raise TypeError("src variable must be string.")
-        exclude_files = list(_Private.DEFAULT_EXCLUDES)
-        exclude_files.append(os_path.basename(_Private.detect_call_path()))
+        exclude_files = list(_DEFAULT_EXCLUDES)
+        exclude_files.append(os_path.basename(_detect_call_path()))
         if excludes:
             if not iter(excludes):
                 raise TypeError("excludes variable must be iterable.")
