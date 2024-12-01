@@ -17,6 +17,7 @@ jobs:
       - name: Semantic Version Release
         uses: python-semantic-release/python-semantic-release@v9
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           root_options: "-vv --noop"
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
