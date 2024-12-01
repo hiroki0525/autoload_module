@@ -12,12 +12,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Publish
-        run: |
-          poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish -r testpypi --build
-        env:
-          POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_TOKEN }}
+      - name: Build
+        run: poetry build
+      - name: Semantic Version Release
+        uses: python-semantic-release/python-semantic-release@v9
+        with:
+          root_options: "-vv --noop"
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
+          root_options: "-vv --noop"
       - name: Test after Publish
         run: |
           pip install -i https://test.pypi.org/simple/ autoload-module

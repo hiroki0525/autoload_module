@@ -12,7 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Publish
-        run: poetry publish --build
-        env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+      - name: Build
+        run: poetry build
+      - name: Semantic Version Release
+        uses: python-semantic-release/python-semantic-release@v9
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
