@@ -4,7 +4,7 @@
 [![Downloads](https://pepy.tech/badge/autoload-module)](https://pepy.tech/project/autoload-module)
 <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat" alt="MIT License image">
 
-This library will give you comfortable Python metaprogramming.  
+This library will give you comfortable Python metaprogramming.
 The following is a plain example.
 
 - Directory
@@ -45,7 +45,7 @@ ModuleLoader(
 ```
 The ModuleLoader can be generated with no parameters.
 In that case, the instance has the absolute path where
-it was initialized.  
+it was initialized.
 - Directory
 ```
 /usr/local/src/project/
@@ -109,7 +109,7 @@ load_classes(
     src: str,
     excludes: Iterable[str] = (),
     recursive: bool = False,
-) -> Tuple[Type, ...]:
+) -> tuple[Type, ...]:
 ```
 This method read the Python package or module and return the tuple of class objects.
 
@@ -172,7 +172,7 @@ validator_classes = loader.load_classes("main")
 # -> validateB!!
 # -> validateC!!
 ```
-This function will check directory structure recursively if you specify `recursive=True`. 
+This function will check directory structure recursively if you specify `recursive=True`.
 ```python
 # 'recursive=False' is default.
 # In this case, the loader will also check 'pkg/main/sub/'.
@@ -203,7 +203,7 @@ load_functions(
     src: str,
     excludes: Iterable[str] = (),
     recursive: bool = False,
-) -> Tuple[Callable, ...]:
+) -> tuple[Callable, ...]:
 ```
 This method read the Python package or module and return the tuple of functions.
 The usage is the same as `load_classes`.
@@ -215,7 +215,7 @@ When you want to customize their name, use `@load_config` decorator.
     - validator_a.py
     ```python
     from autoload import load_config
-  
+
     @load_config()
     class CustomValidator:
         def validate(self):
@@ -225,7 +225,7 @@ When you want to customize their name, use `@load_config` decorator.
     - validator_a.py
     ```python
     from autoload import load_config
-  
+
     # sort in ascending order
     @load_config(order=1)
     class ValidatorA:
@@ -242,18 +242,18 @@ When you want to customize their name, use `@load_config` decorator.
   class ValidatorA:
     def validate(self):
         print("validateA!!")
-  
+
   # Anything goes.
   @load_config(order=2)
   class Foo:
     pass
   ```
-  
+
   - main.py
   ```python
   from autoload import ModuleLoader
   from autoload.exception import LoaderStrictModeError
-  
+
   loader = ModuleLoader()
   # return ValidatorA and Foo class objects.
   classes = loader.load_classes("pkg")

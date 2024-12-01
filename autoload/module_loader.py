@@ -1,7 +1,18 @@
+"""Module for loading classes and functions from Python modules and packages.
+
+based on given settings.
+"""
+
+from __future__ import annotations
+
 import inspect
 from dataclasses import dataclass
-from os import path as os_path
-from typing import Callable, ClassVar, Iterable, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+from typing_extensions import Self
 
 from ._context import Context, ContextFactory
 from ._globals import Class_Or_Func, DecoratorVal, LoadType
@@ -9,74 +20,88 @@ from ._import import ImportableFactory, ImportOption
 
 __all__ = ("ModuleLoader", "ModuleLoaderSetting")
 
+from pathlib import Path
+
 from .exception import LoaderStrictModeError
 
+__THIS_FILE = Path(__file__).name
+_DEFAULT_EXCLUDES = ("__init__.py", __THIS_FILE, "__pycache__")
 
-class _Private:
-    """Private namespace.
-    If you do not want to expose, define here as much as possible.
-    """
 
-    THIS_FILE = os_path.basename(__file__)
-    DEFAULT_EXCLUDES = ("__init__.py", THIS_FILE, "__pycache__")
+def _detect_call_path() -> str | None:
+    this_file = __THIS_FILE
+    stack = inspect.stack()
+    for path in stack:
+        path_name = path.filename
+        if this_file == Path(path_name).name:
+            continue
+        return path_name
+    return None
 
-    def __new__(cls, *args, **kwargs):
-        raise Exception(f"{cls.__name__} can't be initialized.")
 
-    @classmethod
-    def detect_call_path(cls):
-        this_file = cls.THIS_FILE
-        stack = inspect.stack()
-        for path in stack:
-            path_name = path.filename
-            if this_file == os_path.basename(path_name):
-                continue
-            return path_name
-
-    @classmethod
-    def init_base_url(cls, base_path: Optional[str] = None):
-        if base_path is None:
-            return cls.init_base_url(os_path.dirname(cls.detect_call_path()))
-        if base_path == "/":
-            return base_path
-        if base_path == "":
-            return "/"
-        if base_path.endswith("/"):
-            return base_path[:-1]
+def _init_base_url(base_path: str | None = None) -> str:
+    if base_path is None:
+        call_path = _detect_call_path()
+        if call_path is None:
+            msg = "Call path could not be detected."
+            raise ValueError(msg)
+        return _init_base_url(str(Path(call_path).parent))
+    if base_path == "/":
         return base_path
+    if base_path == "":
+        return "/"
+    if base_path.endswith("/"):
+        return base_path[:-1]
+    return base_path
 
 
 @dataclass(frozen=True)
 class ModuleLoaderSetting:
-    base_path: Optional[str] = None
+    """Settings for the ModuleLoader."""
+
+    base_path: str | None = None
     strict: bool = False
     singleton: bool = False
 
 
 class ModuleLoader:
+    """Class responsible for loading modules, classes, and functions.
+
+    based on given settings.
+    """
+
     _setting: ClassVar[ModuleLoaderSetting] = ModuleLoaderSetting()
-    _instance: Optional["ModuleLoader"] = None
+    _instance: Self | None = None
     _INSTANCE_VAL_COUNT = 2
 
     @classmethod
     def get_setting(cls) -> ModuleLoaderSetting:
+        """Get the current settings of the ModuleLoader."""
         return cls._setting
 
     @classmethod
     def set_setting(
         cls,
-        base_path: Optional[str] = None,
+        base_path: str | None = None,
         strict: bool = False,
         singleton: bool = False,
     ) -> None:
+        """Set the settings for the ModuleLoader.
+
+        :param base_path: Base path for import.
+        :param strict: If True, ModuleLoader strictly tries to load a class or
+            function object per a Python module based on its name.
+        :param singleton: If True, ensures only one instance of ModuleLoader is created.
+        """
         cls._setting = ModuleLoaderSetting(base_path, strict, singleton)
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:  # noqa: ANN401
+        """Create and return a new instance of ModuleLoader."""
         if cls._setting.singleton is False:
             cls._instance = None
-            return super(ModuleLoader, cls).__new__(cls)
+            return super().__new__(cls)
         if cls._instance is None:
-            cls._instance = super(ModuleLoader, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             return cls._instance
         if cls._setting.strict is False:
             return cls._instance
@@ -86,7 +111,7 @@ class ModuleLoader:
         if base_path is None:
             global_base_path = cls._setting.base_path
             base_path = (
-                _Private.init_base_url(base_path)
+                _init_base_url(base_path)
                 if global_base_path is None
                 else global_base_path
             )
@@ -94,15 +119,21 @@ class ModuleLoader:
             strict = cls._setting.strict
         ci = cls._instance
         if ci.base_path != base_path or ci.strict != strict:
-            raise LoaderStrictModeError(
+            error_message = (
                 "Now singleton setting. "
                 "You have already initialized object that has some attributes. "
                 "Please check constructor variables."
             )
+            raise LoaderStrictModeError(error_message)
         return cls._instance
 
-    def __init__(self, base_path: Optional[str] = None, strict: Optional[bool] = None):
-        """initialize
+    def __init__(
+        self,
+        base_path: str | None = None,
+        strict: bool | None = None,
+    ) -> None:
+        """Initialize.
+
         :param base_path: Base path for import.
             Defaults to the path where this object was initialized.
         :param strict: If strict is True,
@@ -111,59 +142,72 @@ class ModuleLoader:
         """
         setting = ModuleLoader._setting
         if setting.singleton is True and hasattr(
-            self, f"__{self.__class__.__name__}_base_path"
+            self,
+            f"__{self.__class__.__name__}_base_path",
         ):
             return
         global_base_path, global_strict = setting.base_path, setting.strict
         self.__base_path: str = (
-            _Private.init_base_url(base_path)
-            if global_base_path is None
-            else global_base_path
+            _init_base_url(base_path) if global_base_path is None else global_base_path
         )
         self.__strict: bool = global_strict if strict is None else strict
 
     @property
     def base_path(self) -> str:
+        """Return the base path setting."""
         return self.__base_path
 
     @property
     def strict(self) -> bool:
+        """Return the strict mode setting."""
         return self.__strict
 
-    def load_class(self, file_name: str) -> Type:
+    def load_class(self, file_name: str) -> type:
         """Import Python module and return class.
+
         :param file_name: Python file name (Module name).
             You can input relative path like '../example' based on 'base_path'.
         :return: class object defined in the Python file (Module) according to rules.
         """
-        return self.__load_resource(file_name, ContextFactory.get(LoadType.clazz))
+        return cast(
+            type,
+            self.__load_resource(file_name, ContextFactory.get(LoadType.clazz)),
+        )
 
     def load_function(self, file_name: str) -> Callable:
         """Import Python module and return function.
+
         :param file_name: Python file name (module name).
             You can input relative path like '../example' based on 'base_path'.
         :return: function object defined in the Python file (Module) according to rules.
         """
-        return self.__load_resource(file_name, ContextFactory.get(LoadType.func))
+        return cast(
+            Callable,
+            self.__load_resource(file_name, ContextFactory.get(LoadType.func)),
+        )
 
     def load_classes(
         self,
         src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[Type, ...]:
+    ) -> tuple[type, ...]:
         """Import Python package and return classes.
+
         :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
         :param excludes: Python file names you don't want to import in the package.
         :param recursive: If True, import Python package recursively.
         :return: class objects defined in the Python package according to rules.
         """
-        return self.__load_resources(
-            src,
-            excludes=excludes,
-            recursive=recursive,
-            context=ContextFactory.get(LoadType.clazz),
+        return cast(
+            tuple[type, ...],
+            self.__load_resources(
+                src,
+                excludes=excludes,
+                recursive=recursive,
+                context=ContextFactory.get(LoadType.clazz),
+            ),
         )
 
     def load_functions(
@@ -171,8 +215,9 @@ class ModuleLoader:
         src: str,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[Callable, ...]:
+    ) -> tuple[Callable, ...]:
         """Import Python package and return functions.
+
         :param src: Python package or module name.
             You can input relative path like '../example' based on 'base_path'.
         :param excludes: Python file names you don't want to import in the package.
@@ -186,8 +231,8 @@ class ModuleLoader:
             context=ContextFactory.get(LoadType.func),
         )
 
-    def __path_fix(self, name: str) -> str:
-        if not name or name == "." or name == "/" or name == "./":
+    def __path_fix(self, name: str) -> str:  # noqa: C901, PLR0911, PLR0912
+        if not name or name in (".", "/", "./"):
             return self.__base_path
         if name.startswith("/"):
             result_path = self.__base_path + name
@@ -219,7 +264,7 @@ class ModuleLoader:
             if path is not None:
                 base_path_arr = self.__base_path.split("/")
                 result_base_path = "/".join(
-                    base_path_arr[0 : len(base_path_arr) - level]
+                    base_path_arr[0 : len(base_path_arr) - level],
                 )
                 if path.startswith("/"):
                     if path.endswith("/"):
@@ -230,15 +275,16 @@ class ModuleLoader:
                 # example: ..foo.bar
                 path = "/".join(path.split("."))
                 return result_base_path + "/" + path
-        # example: foo.bar
         path = "/".join(name.split("."))
         return self.__base_path + "/" + path
 
     def __load_resource(self, file_name: str, context: Context) -> Class_Or_Func:
         if file_name is None:
-            raise TypeError("'file_name' parameter is required.")
+            error_message = "'file_name' parameter is required."
+            raise TypeError(error_message)
         if not isinstance(file_name, str):
-            raise TypeError("file_name variable must be string.")
+            error_message = "file_name variable must be string."
+            raise TypeError(error_message)
         fix_path = self.__path_fix(file_name)
         importable = ImportableFactory.get(fix_path, context)
         return importable.import_resources()[0]
@@ -249,24 +295,30 @@ class ModuleLoader:
         context: Context,
         excludes: Iterable[str] = (),
         recursive: bool = False,
-    ) -> Tuple[Class_Or_Func, ...]:
+    ) -> tuple[Class_Or_Func, ...]:
         if src is None:
-            raise TypeError("'src' parameter is required.")
+            error_message = "'src' parameter is required."
+            raise TypeError(error_message)
         if not isinstance(src, str):
-            raise TypeError("src variable must be string.")
-        exclude_files = list(_Private.DEFAULT_EXCLUDES)
-        exclude_files.append(os_path.basename(_Private.detect_call_path()))
+            error_message = "src variable must be string."
+            raise TypeError(error_message)
+        exclude_files = list(_DEFAULT_EXCLUDES)
+        call_path = _detect_call_path()
+        if call_path:
+            exclude_files.append(Path(call_path).name)
         if excludes:
             if not iter(excludes):
-                raise TypeError("excludes variable must be iterable.")
+                error_message = "excludes variable must be iterable."
+                raise TypeError(error_message)
             for exclude in excludes:
                 if not isinstance(exclude, str):
-                    raise TypeError("The contents of the excludes must all be strings")
+                    error_message = "The contents of the excludes must all be strings"
+                    raise TypeError(error_message)
                 exclude_files.append(exclude)
         import_option = ImportOption(recursive, exclude_files, self.__strict)
         target_dir = self.__path_fix(src)
         importable = ImportableFactory.get(target_dir, context, import_option)
-        mods: List[Class_Or_Func] = importable.import_resources()
+        mods: list[Class_Or_Func] = importable.import_resources()
         order_attr = DecoratorVal.order.value
         has_order_mods = [
             mod for mod in mods if hasattr(mod, order_attr) and getattr(mod, order_attr)

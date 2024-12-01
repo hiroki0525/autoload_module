@@ -6,9 +6,6 @@ from tests.func.base.packageD.package_d_func1 import multiple2, multiple3, packa
 from tests.func.base.packageD.package_d_func2 import multiple4, multiple5
 from tests.func.base.packageD.package_d_func3 import package_d_func3
 
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
-
 from autoload import ModuleLoader
 from autoload.exception import LoaderStrictModeError
 from tests.func.base.func1 import func1

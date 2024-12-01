@@ -10,19 +10,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build
+        run: poetry build
+      - name: Semantic Version Release
+        uses: python-semantic-release/python-semantic-release@v9
         with:
-          cache: 'poetry'
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Publish
-        run: |
-          poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish -r testpypi --build
-        env:
-          POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          root_options: "-vv --noop"
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
+          root_options: "-vv --noop"
       - name: Test after Publish
         run: |
           pip install -i https://test.pypi.org/simple/ autoload-module
