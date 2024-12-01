@@ -32,6 +32,8 @@ pre-commit = "*"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
+ruff = "^0.8.1"
+mypy = "^1.13.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
