@@ -269,17 +269,5 @@ class TestAutoLoadModule(unittest.TestCase):
                 with self.assertRaises(LoaderStrictModeError, msg=msg):
                     self.loader.load_classes(src)
 
-    def test_validate_raise_error(self):
-        test_cases = (
-            ({ "src": None }, "'src' parameter is required.",),
-            ({ "src": 1 }, "src variable must be string.",),
-            ({ "excludes": 1 }, "excludes variable must be iterable.",),
-            ({ "excludes": [1,2] }, "The contents of the excludes must all be strings",),
-        )
-        for vals, msg in test_cases:
-            with self.subTest(vals=vals, msg=msg):
-                with self.assertRaises(TypeError, msg=msg):
-                    self.loader.load_classes(**vals)
-
 if __name__ == '__main__':
     unittest.main()

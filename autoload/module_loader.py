@@ -279,12 +279,6 @@ class ModuleLoader:
         return self.__base_path + "/" + path
 
     def __load_resource(self, file_name: str, context: Context) -> Class_Or_Func:
-        if file_name is None:
-            error_message = "'file_name' parameter is required."
-            raise TypeError(error_message)
-        if not isinstance(file_name, str):
-            error_message = "file_name variable must be string."
-            raise TypeError(error_message)
         fix_path = self.__path_fix(file_name)
         importable = ImportableFactory.get(fix_path, context)
         return importable.import_resources()[0]
@@ -296,24 +290,12 @@ class ModuleLoader:
         excludes: Iterable[str] = (),
         recursive: bool = False,
     ) -> tuple[Class_Or_Func, ...]:
-        if src is None:
-            error_message = "'src' parameter is required."
-            raise TypeError(error_message)
-        if not isinstance(src, str):
-            error_message = "src variable must be string."
-            raise TypeError(error_message)
-        exclude_files = list(_DEFAULT_EXCLUDES)
+        exclude_files = list(_DEFAULT_EXCLUDES).copy()
         call_path = _detect_call_path()
         if call_path:
             exclude_files.append(Path(call_path).name)
         if excludes:
-            if not iter(excludes):
-                error_message = "excludes variable must be iterable."
-                raise TypeError(error_message)
             for exclude in excludes:
-                if not isinstance(exclude, str):
-                    error_message = "The contents of the excludes must all be strings"
-                    raise TypeError(error_message)
                 exclude_files.append(exclude)
         import_option = ImportOption(recursive, exclude_files, self.__strict)
         target_dir = self.__path_fix(src)
