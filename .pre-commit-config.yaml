@@ -12,6 +12,10 @@ repos:
       - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.19.0
+    hooks:
+      - id: commitlint
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.1
     hooks:
