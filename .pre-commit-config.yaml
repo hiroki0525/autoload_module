@@ -5,17 +5,13 @@ default_language_version:
   python: python3.9
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 5.0.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
       - id: check-toml
       - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
-    rev: v9.19.0
-    hooks:
-      - id: commitlint
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.1
     hooks:
