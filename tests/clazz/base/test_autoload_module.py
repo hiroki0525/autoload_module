@@ -6,9 +6,6 @@ from tests.clazz.base.packageD.module_d1 import ModuleD1, ModuleD2, ModuleD3
 from tests.clazz.base.packageD.module_d2 import ModuleD4, ModuleD5
 from tests.clazz.base.packageD.module_d3 import ModuleD6
 
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-sys.path.append(str(Path(__file__).parent.parent.parent.parent / "autoload"))
-
 from autoload import ModuleLoader
 from autoload.exception import LoaderStrictModeError
 from tests.clazz.base.module_1 import Module1
