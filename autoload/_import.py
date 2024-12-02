@@ -3,6 +3,8 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -80,6 +82,7 @@ class Importable:
 
 
 class _Module(Importable):
+    @override
     def import_resources(self) -> list[Class_Or_Func]:  # noqa: C901
         file = self.get_base_name()
         context = self._context
@@ -141,6 +144,7 @@ class _Module(Importable):
 
 
 class _Package(Importable):
+    @override
     def import_resources(self) -> list[Class_Or_Func]:
         return [
             resource
@@ -148,6 +152,7 @@ class _Package(Importable):
             for resource in child.import_resources()
         ]
 
+    @override
     def _load_children(self) -> list[Importable]:
         path = self._path
         option = self._option

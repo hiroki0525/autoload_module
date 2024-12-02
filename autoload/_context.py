@@ -3,6 +3,8 @@ from __future__ import annotations
 import inspect
 from typing import Any, Callable, ClassVar, cast
 
+from typing_extensions import override
+
 from ._globals import LoadType
 
 
@@ -36,16 +38,20 @@ class Context:
 
 
 class _ClassContext(Context):
+    @override
     def predicate(self) -> Callable[[object], bool]:
         return inspect.isclass
 
+    @override
     def draw_comparison(self, file: str) -> str:
         return "".join([s.capitalize() for s in file.split("_")])
 
 
 class _FunctionContext(Context):
+    @override
     def predicate(self) -> Callable[[object], bool]:
         return inspect.isfunction
 
+    @override
     def draw_comparison(self, file: str) -> str:
         return file.lower()
