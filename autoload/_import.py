@@ -1,6 +1,13 @@
+from __future__ import annotations
+
 import inspect
-from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from ._context import Context
+
 from dataclasses import dataclass
 from importlib import import_module
 from os import listdir
@@ -8,7 +15,6 @@ from pathlib import Path
 from sys import path as sys_path
 from typing import Any
 
-from ._context import Context
 from ._globals import Class_Or_Func, DecoratorVal
 from .exception import LoaderStrictModeError
 
@@ -37,7 +43,17 @@ class ImportOption:
 default_option = ImportOption()
 
 
-class Importable(ABC):
+class Importable:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Importable:  # noqa: ANN401, PYI034
+        path = args[0] or kwargs.get("path") or ""
+        is_dir = Path(path).is_dir()
+        fixed_path = path if is_dir else "/".join(path.split("/")[:-1])
+        if fixed_path not in sys_path:
+            sys_path.append(fixed_path)
+        if is_dir:
+            return super().__new__(_Package, *args, **kwargs)
+        return super().__new__(_Module, *args, **kwargs)
+
     def __init__(
         self,
         path: str,
@@ -53,13 +69,13 @@ class Importable(ABC):
             child for child in children if child.get_base_name() not in fix_excludes
         ]
 
-    @abstractmethod
-    def import_resources(self) -> list[Class_Or_Func]: ...
+    def import_resources(self) -> list[Class_Or_Func]:
+        raise NotImplementedError
 
     def get_base_name(self) -> str:
         return _exclude_ex(Path(self._path).name)
 
-    def _load_children(self) -> list["Importable"]:
+    def _load_children(self) -> list[Importable]:
         return []
 
 
@@ -147,22 +163,10 @@ class _Package(Importable):
                 continue
             fixed_file_or_dir = _exclude_ex(file_or_dir) if is_module else file_or_dir
             children.append(
-                ImportableFactory.get(
+                Importable(
                     f"{path}/{fixed_file_or_dir}",
                     self._context,
                     option,
                 ),
             )
         return children
-
-
-class ImportableFactory:
-    @staticmethod
-    def get(path: str, *args: Any, **kwargs: Any) -> Importable:  # noqa: ANN401
-        is_dir = Path(path).is_dir()
-        fixed_path = path if is_dir else "/".join(path.split("/")[:-1])
-        if fixed_path not in sys_path:
-            sys_path.append(fixed_path)
-        if is_dir:
-            return _Package(path, *args, **kwargs)
-        return _Module(path, *args, **kwargs)
