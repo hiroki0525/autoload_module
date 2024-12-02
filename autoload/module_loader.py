@@ -16,7 +16,7 @@ from typing_extensions import Self
 
 from ._context import Context, ContextFactory
 from ._globals import Class_Or_Func, DecoratorVal, LoadType
-from ._import import ImportableFactory, ImportOption
+from ._import import Importable, ImportOption
 
 __all__ = ("ModuleLoader", "ModuleLoaderSetting")
 
@@ -280,7 +280,7 @@ class ModuleLoader:
 
     def __load_resource(self, file_name: str, context: Context) -> Class_Or_Func:
         fix_path = self.__path_fix(file_name)
-        importable = ImportableFactory.get(fix_path, context)
+        importable = Importable(fix_path, context)
         return importable.import_resources()[0]
 
     def __load_resources(
@@ -299,7 +299,7 @@ class ModuleLoader:
                 exclude_files.append(exclude)
         import_option = ImportOption(recursive, exclude_files, self.__strict)
         target_dir = self.__path_fix(src)
-        importable = ImportableFactory.get(target_dir, context, import_option)
+        importable = Importable(target_dir, context, import_option)
         mods: list[Class_Or_Func] = importable.import_resources()
         order_attr = DecoratorVal.order.value
         has_order_mods = [
