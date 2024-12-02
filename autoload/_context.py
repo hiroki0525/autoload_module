@@ -1,13 +1,25 @@
 from __future__ import annotations
 
 import inspect
-from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Any, Callable, ClassVar, cast
 
 from ._globals import LoadType
 
 
-class Context(ABC):
+class Context:
+    __class_context: ClassVar[_ClassContext | None] = None
+    __function_context: ClassVar[_FunctionContext | None] = None
+
+    def __new__(cls, *args: Any, **kargs: Any) -> Context:  # noqa: ANN401, PYI034
+        load_type = cast(LoadType, args[0] or kargs.get("load_type"))
+        if load_type == LoadType.clazz:
+            if cls.__class_context is None:
+                cls.__class_context = _ClassContext(load_type)
+            return cls.__class_context
+        if cls.__function_context is None:
+            cls.__function_context = _FunctionContext(load_type)
+        return cls.__function_context
+
     def __init__(self, load_type: LoadType) -> None:
         self.__load_type = load_type
 
@@ -15,11 +27,12 @@ class Context(ABC):
     def load_type(self) -> LoadType:
         return self.__load_type
 
-    @abstractmethod
-    def predicate(self) -> Callable[[object], bool]: ...
+    def predicate(self) -> Callable[[object], bool]:
+        raise NotImplementedError
 
-    @abstractmethod
-    def draw_comparison(self, file: str) -> str: ...
+
+    def draw_comparison(self, file: str) -> str:
+        raise NotImplementedError
 
 
 class _ClassContext(Context):
@@ -36,18 +49,3 @@ class _FunctionContext(Context):
 
     def draw_comparison(self, file: str) -> str:
         return file.lower()
-
-
-class ContextFactory:
-    __class_context: _ClassContext | None = None
-    __function_context: _FunctionContext | None = None
-
-    @classmethod
-    def get(cls, load_type: LoadType) -> Context:
-        if load_type == LoadType.clazz:
-            if cls.__class_context is None:
-                cls.__class_context = _ClassContext(load_type)
-            return cls.__class_context
-        if cls.__function_context is None:
-            cls.__function_context = _FunctionContext(load_type)
-        return cls.__function_context
