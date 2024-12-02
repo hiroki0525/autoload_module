@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 from typing_extensions import Self
 
-from ._context import Context, ContextFactory
 from ._globals import Class_Or_Func, DecoratorVal, LoadType
 from ._import import Importable, ImportOption
 
@@ -39,11 +38,7 @@ def _detect_call_path() -> str | None:
     return None
 
 
-def _init_base_url(base_path: str | None = None) -> str:
-    if base_path is None:
         call_path = _detect_call_path()
-        if call_path is None:
-            msg = "Call path could not be detected."
             raise ValueError(msg)
         return _init_base_url(str(Path(call_path).parent))
     if base_path == "/":
@@ -183,7 +178,6 @@ class ModuleLoader:
         """
         return cast(
             Callable,
-            self.__load_resource(file_name, ContextFactory.get(LoadType.func)),
         )
 
     def load_classes(
