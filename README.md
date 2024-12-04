@@ -1,305 +1,215 @@
 # autoload_module
+
 [![PyPI version](https://badge.fury.io/py/autoload-module.svg)](https://badge.fury.io/py/autoload-module)
 [![Test](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml/badge.svg)](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml)
 [![Downloads](https://pepy.tech/badge/autoload-module)](https://pepy.tech/project/autoload-module)
-<img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat" alt="MIT License image">
+![MIT License image](<%5Bimage_url%5D(https://img.shields.io/badge/license-MIT-blue.svg?style=flat)>)
 
-This library will give you comfortable Python metaprogramming.
+Get classes and functions from modules simply and efficiently.
 The following is a plain example.
 
-- Directory
-```
+▼ Directory
+
+```text
 project/
- ├ example.py
- └ validator/
-   ├ validator_a.py
-   ├ validator_b.py
-   └ validator_c.py
+ ├ main.py
+ └ pipelines/
+   ├ pipeline_a.py
+   ├ pipeline_b.py
+   └ pipeline_c.py
 ```
-- example.py
-```python
-from autoload import ModuleLoader
 
-input = "foo bar baz"
-loader = ModuleLoader()
+▼ main.py
 
-# Automatically import modules and return class objects
-validator_classes = loader.load_classes("validator")
-try:
-    # initialize and execute method
-    [clazz().validate(input) for clazz in validator_classes]
-except:
-    print("input is invalid!!")
+```py
+from autoload import autoload
+from functools import reduce
+
+# Automatically import modules and return function objects
+pipelines = autoload("pipelines", "function")
+
+initial_value = 1
+
+# Execute functions sequentially
+final_result = reduce(lambda acc, func: func(acc), pipelines, initial_value)
 ```
+
 ## Install
-```
+
+```bash
 pip install autoload-module
 ```
-## Usage
-### Constructor
-```
-ModuleLoader(
-  base_path: Optional[str] = None,
-  strict: bool = False
-)
-```
-The ModuleLoader can be generated with no parameters.
-In that case, the instance has the absolute path where
-it was initialized.
-- Directory
-```
-/usr/local/src/project/
-  ├ example.py
-  └ validator/
-    ├ validator_a.py
-    ├ validator_b.py
-    └ validator_c.py
-```
-- example.py
-```python
-from autoload import ModuleLoader
 
-# The instance has '/usr/local/src/project/'
-loader = ModuleLoader()
+## Quick Start
 
-# load modules in the directory; '/usr/local/src/project/validator/'
-validator_classes = loader.load_classes("validator")
-```
-If you want to change the base path, you must generate the ModuleLoader with an absolute path parameter.
-```python
-loader = ModuleLoader('/user/local/src/custom')
-```
+There are only 2 steps. Imagine the following directory structure.
 
-About strict parameter, please see [here](#NOTE) .
-
-You can also create global setting and initialize singleton object.
-```python
-from autoload import ModuleLoader
-import os
-
-# global setting
-ModuleLoader.set_setting(base_path=os.getcwd(), strict=True)
-
-loader_a = ModuleLoader()
-loader_b = ModuleLoader()
-
-print(loader_a.base_path)
-# -> /Users/user1/abc
-print(loader_b.base_path)
-# -> /Users/user1/abc
-
-# singleton setting
-ModuleLoader.set_setting(singleton=True)
-
-loader_c = ModuleLoader()
-loader_d = ModuleLoader()
-loader_e = ModuleLoader('/test')
-
-assert loader_c is loader_d # OK
-assert loader_c is loader_e # OK
-
-# The base_path is '/Users/user1/abc'
-assert loader_c.base_path is loader_e.base_path # OK
-```
-
-### Methods
-#### load_classes
-```
-load_classes(
-    src: str,
-    excludes: Iterable[str] = (),
-    recursive: bool = False,
-) -> tuple[Type, ...]:
-```
-This method read the Python package or module and return the tuple of class objects.
-
-- Directory
-```
-pkg/
- ├ example.py
- ├ __init__.py
- ├ config.yaml
- └ main/
-     ├ validator_a.py
-     ├ validator_b.py
-     ├ validator_c.py
-     └ sub/
-        ├ validator_d.py
-        └ validator_e.py
-```
-- validator_a.py
-```python
-class ValidatorA:
-    def validate(self):
-        print("validateA!!")
-```
-- example.py
-```python
-loader = ModuleLoader()
-
-# Automatically read modules without '__init__.py', not py file, and this file.
-# return the tuple of ValidateA, ValidatorB, and ValidatorC class objects
-validator_classes = loader.load_classes("main")
-
-# initialize and execute method
-[clazz().validate() for clazz in validator_classes]
-# -> validateA!!
-# -> validateB!!
-# -> validateC!!
-```
-You can also load only specific modules using `excludes` variable or `load_config` decorator as below.
-```python
-# Pattern1: 'excludes'
-# 'excludes' is a iterable object like tuple, list.
-# You must specify module names in 'excludes'.
-validator_classes = loader.load_classes("main", ["validator_a"])
-
-[clazz().validate() for clazz in validator_classes]
-# -> validateB!!
-# -> validateC!!
-
-# Pattern2: 'load_config'
-from autoload import load_config
-
-@load_config(load=False)
-class ValidatorA:
-  def validate(self):
-    print("validateA!!")
-
-validator_classes = loader.load_classes("main")
-
-[clazz().validate() for clazz in validator_classes]
-# -> validateB!!
-# -> validateC!!
-```
-This function will check directory structure recursively if you specify `recursive=True`.
-```python
-# 'recursive=False' is default.
-# In this case, the loader will also check 'pkg/main/sub/'.
-validator_classes = loader.load_classes("main", recursive=True)
-
-[clazz().validate() for clazz in validator_classes]
-# -> validateA!!
-# -> validateB!!
-# -> validateC!!
-# -> validateD!!
-# -> validateE!!
-```
-You can specify `src` as below.
-```python
-loader.load_classes("main/validator_a.py")
-loader.load_classes("main.validator_a")
-loader.load_classes("./main/validator_a")
-loader.load_classes(".main.validator_a")
-loader.load_classes("main.sub.validator_d")
-loader.load_classes("./main/sub/validator_d")
-loader.load_classes("../otherpkg")
-loader.load_classes("..otherpkg")
-```
-
-#### load_functions
-```
-load_functions(
-    src: str,
-    excludes: Iterable[str] = (),
-    recursive: bool = False,
-) -> tuple[Callable, ...]:
-```
-This method read the Python package or module and return the tuple of functions.
-The usage is the same as `load_classes`.
-
-##### NOTE
-- To search class or function, **You must match the name of file, and the one of class or function.**
-For example, if you named the file `test_module.py`, you must name the class `TestModule` or the function `test_module`.
-When you want to customize their name, use `@load_config` decorator.
-    - validator_a.py
-    ```python
-    from autoload import load_config
-
-    @load_config()
-    class CustomValidator:
-        def validate(self):
-            print("validateA!!")
-    ```
-- You can also control the order of loaded class objects using `@load_config` decorator.
-    - validator_a.py
-    ```python
-    from autoload import load_config
-
-    # sort in ascending order
-    @load_config(order=1)
-    class ValidatorA:
-        def validate(self):
-            print("validateA!!")
-    ```
-- If you decorate some classes or functions with `@load_config`, the loader will load them.
-  However, initialized `strict=True`, the loader denies multiple loading as below.
-  - pkg/validator_a.py
-  ```python
-  from autoload import load_config
-
-  # This will be loaded because of name's rule.
-  class ValidatorA:
-    def validate(self):
-        print("validateA!!")
-
-  # Anything goes.
-  @load_config(order=2)
-  class Foo:
-    pass
-  ```
-
-  - main.py
-  ```python
-  from autoload import ModuleLoader
-  from autoload.exception import LoaderStrictModeError
-
-  loader = ModuleLoader()
-  # return ValidatorA and Foo class objects.
-  classes = loader.load_classes("pkg")
-
-  # ModuleLoader strictly try to load a class or function object
-  # per a Python module on a basis of its name.
-  strict_loader = ModuleLoader(strict=True)
-  try:
-    classes = strict_loader.load_classes("pkg")
-  except LoaderStrictModeError as e:
-    print(e)
-  # -> Loader can only load a 'ValidatorA' class in validator_a module.
-  # -> Please check 'Foo' in validator_a module.
-  ```
-#### load_class
-```
-load_class(file_name: str)
-```
-This method read the Python file and return the class object.
-- Directory
-```
+```text
 project/
-  ├ example.py
-  └ validator.py
+ ├ main.py
+ └ functions.py
 ```
-- validator.py
-```python
-class Validator:
-    def validate(self):
-        print("validate!!")
-```
-- example.py
-```python
-loader = ModuleLoader()
-clazz = loader.load_class("validator")
-clazz().validate()
-# -> validate!!
-```
-How to specify `file_name` is the same as that of `load_classes`.
 
-#### load_function
+### 1. Set `@loadable` to the class or function you want to import
+
+```py
+# functions.py
+
+from autoload import loadable
+
+
+@loadable
+def increment(number: int) -> int:
+    return number + 1
+
+
+@loadable
+def decrement(number: int) -> int:
+    return number - 1
 ```
-load_function(file_name: str)
+
+### 2. Set package or module name to `autoload`
+
+```py
+# main.py
+
+from autoload import autoload
+
+
+def main() -> None:
+    functions = autoload("pipelines", "function")
+    # If you want to get class
+    # pipelines = autoload("pipelines", "class")
+
+    # call increment function
+    print(functions[0](1))
+    # => 2
+
+    # call decrement function
+    print(functions[1](1))
+    # => 0
+
+
+if __name__ == "__main__":
+    main()
 ```
-This method read the Python file and return a function object.
-The usage is the same as `load_class`.
+
+## FAQ
+
+### Can I import classes?
+
+Set `"class"` to `autoload` .
+
+▼ Directory
+
+```text
+project/
+ ├ main.py
+ └ pipelines.py
+```
+
+▼ Code
+
+```py
+# pipelines.py
+
+from autoload import loadable
+
+
+@loadable
+class PipelineA:
+    pass
+
+
+@loadable
+class PipelineB:
+    pass
+
+
+# main.py
+from autoload import autoload
+
+classes = autoload("pipelines", "class")
+```
+
+### Can nested packages be loaded?
+
+Set `"recursive=True"` to `autoload` .
+
+▼ Directory
+
+```text
+project/
+ ├ main.py
+ └ main_package/
+   ├ module_a.py
+   └ sub_package/
+     ├ module_b.py
+     └ module_c.py
+```
+
+▼ Code
+
+```py
+# module_a.py
+@loadable
+def module_a_function() -> None:
+    pass
+
+
+# module_b.py
+@loadable
+def module_b_function() -> None:
+    pass
+
+
+# module_c.py
+@loadable
+def module_c_function() -> None:
+    pass
+
+
+# main.py
+# only import module_a_function
+functions = autoload("main_package", "function")
+
+# import not only module_a_function but also module_b_function and module_c_function
+functions = autoload("main_package", "function", recursive=True)
+```
+
+### Can the order of loading be controlled?
+
+Set `order` to `@loadable` .
+
+```py
+@loadable(order=3)
+def function_3() -> None:
+    pass
+
+
+@loadable(order=1)
+def function_1() -> None:
+    pass
+
+
+@loadable(order=2)
+def function_2() -> None:
+    pass
+
+
+# main.py
+# The order of `functions` is function_1, function_2 and function_3.
+functions = autoload("package", "function")
+```
+
+### Can relative path be specified?
+
+Set `base` to `autoload` .
+
+```py
+functions = autoload("..module_a", "function", base="main_package.sub_package")
+```
 
 ## License
+
 Released under the MIT license.
