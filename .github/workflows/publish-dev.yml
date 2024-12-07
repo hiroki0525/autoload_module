@@ -7,6 +7,9 @@ jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
@@ -21,7 +24,7 @@ jobs:
         id: release
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
       - name: Publish | Upload to GitHub Release Assets
         uses: python-semantic-release/publish-action@v9
