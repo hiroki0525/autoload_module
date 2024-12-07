@@ -1,10 +1,8 @@
 name: Publish python dev package
-
 on:
   push:
     branches:
       - develop
-
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
@@ -20,6 +18,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           root_options: "-vv --noop"
       - name: Publish package distributions to PyPI
+        id: release
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
