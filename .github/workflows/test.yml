@@ -31,4 +31,4 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Run Tests
-        run: poetry run python -m unittest -v
+        run: poetry run pytest

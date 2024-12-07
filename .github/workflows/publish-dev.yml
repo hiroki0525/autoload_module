@@ -33,4 +33,4 @@ jobs:
       - name: Test after Publish
         run: |
           pip install -i https://test.pypi.org/simple/ autoload-module
-          python -m unittest -v
+          poetry run pytest
