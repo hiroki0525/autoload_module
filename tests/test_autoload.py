@@ -58,7 +58,7 @@ def test_type_class():
 
 
 def test_main_one_relative():
-    functions = autoload(f".{main_module}", "function", base=main_package)
+    functions = autoload(f".{main_module}", "function", base=main_package_name)
     assert len(functions) == 1
     assert functions[0]() == "main_load_function"
 
@@ -81,7 +81,7 @@ def test_main_not_existed_package_but_existed_module():
     functions = autoload(
         f"..{main_module}",
         "function",
-        base=f"{main_package}.nothing",
+        base=f"{main_package_name}.nothing",
     )
     assert len(functions) == 1
     assert functions[0]() == "main_load_function"
