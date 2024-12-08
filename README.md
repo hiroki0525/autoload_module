@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/autoload-module.svg)](https://badge.fury.io/py/autoload-module)
 [![Test](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml/badge.svg)](https://github.com/hiroki0525/autoload_module/actions/workflows/test.yml)
 [![Downloads](https://pepy.tech/badge/autoload-module)](https://pepy.tech/project/autoload-module)
-![MIT License image](<%5Bimage_url%5D(https://img.shields.io/badge/license-MIT-blue.svg?style=flat)>)
+![MIT License image](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)
 
 Get classes and functions from modules simply and efficiently.
 The following is a plain example.
