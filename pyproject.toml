@@ -38,6 +38,8 @@ pytest = "^8.3.4"
 
 [tool.semantic_release]
 build_command = "poetry build"
+version_toml = ["pyproject.toml:tool.poetry.version"]
+tag_format = "{version}"
 
 [tool.semantic_release.branches.main]
 match = "(main|master|develop)"
