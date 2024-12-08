@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/hiroki0525/autoload_module"
 repository = "https://github.com/hiroki0525/autoload_module"
 documentation = "https://github.com/hiroki0525/autoload_module"
-keywords = ["python", "import", "autoload", "autoload_module", "metaprogramming", "dynamic import"]
+keywords = ["python", "import", "autoload", "autoload_module", "dynamic import"]
 classifiers = [
     'Topic :: Software Development :: Libraries',
     'Development Status :: 1 - Planning',

@@ -15,6 +15,9 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
+      - name: Setup | Force correct release branch on workflow sha
+        run: |
+          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
       - uses: ./.github/actions/setup
       - name: Build
         run: poetry build
