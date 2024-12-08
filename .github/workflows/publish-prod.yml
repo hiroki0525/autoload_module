@@ -1,23 +1,33 @@
 name: Publish python package
-
 on:
   push:
     branches:
       - master
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
         with:
-          cache: 'poetry'
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Publish
-        run: poetry publish --build
-        env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Setup | Force correct release branch on workflow sha
+        run: |
+          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
+      - uses: ./.github/actions/setup
+      - name: Semantic Version Release
+        uses: python-semantic-release/python-semantic-release@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish package distributions to PyPI
+        id: release
+        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autoload-module"
-version = "2.0.0"
+version = "3.0.0-rc.1"
 description = "Python Autoload Module"
 authors = ["Hiroki Miyaji <nukoprogramming@gmail.com>"]
 license = "MIT"
@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/hiroki0525/autoload_module"
 repository = "https://github.com/hiroki0525/autoload_module"
 documentation = "https://github.com/hiroki0525/autoload_module"
-keywords = ["python", "import", "autoload", "autoload_module", "metaprogramming", "dynamic import"]
+keywords = ["python", "import", "autoload", "autoload_module", "dynamic import"]
 classifiers = [
     'Topic :: Software Development :: Libraries',
     'Development Status :: 1 - Planning',
@@ -25,15 +25,44 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.9"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "*"
 
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
+ruff = "^0.8.1"
+mypy = "^1.13.0"
+pytest = "^8.3.4"
+
+[tool.semantic_release]
+# not working in ci, so add install poetry command
+build_command = "pip install poetry && poetry build"
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_variables = ["autoload/__init__.py:__version__"]
+tag_format = "{version}"
+
+[tool.semantic_release.branches.main]
+match = "(main|master|develop)"
+prerelease = false
+
+[tool.semantic_release.branches.develop]
+match = "develop"
+prerelease = true
+
+[tool.semantic_release.changelog]
+mode = "init"
+exclude_commit_patterns = [
+  '''chore(?:\([^)]*?\))?: .+''',
+  '''ci(?:\([^)]*?\))?: .+''',
+  '''refactor(?:\([^)]*?\))?: .+''',
+  '''style(?:\([^)]*?\))?: .+''',
+  '''test(?:\([^)]*?\))?: .+''',
+  '''build\((?!deps\): .+)''',
+  '''Merged? .*''',
+]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.ruff]
-target-version = "py38"
-select = ["ALL"]

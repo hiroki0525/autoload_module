@@ -1,8 +1,9 @@
-from .decorator import load_config
-from .module_loader import ModuleLoader, ModuleLoaderSetting
+from ._decorators import loadable
+from ._loaders import autoload
+
+__version__ = "3.0.0-rc.1"
 
 __all__ = (
-    "load_config",
-    "ModuleLoader",
-    "ModuleLoaderSetting",
+    "autoload",
+    "loadable",
 )
