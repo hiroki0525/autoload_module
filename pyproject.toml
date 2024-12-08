@@ -36,6 +36,9 @@ ruff = "^0.8.1"
 mypy = "^1.13.0"
 pytest = "^8.3.4"
 
+[tool.semantic_release]
+build_command = "poetry build"
+
 [tool.semantic_release.branches.main]
 match = "(main|master|develop)"
 prerelease = false

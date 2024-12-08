@@ -19,8 +19,6 @@ jobs:
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
       - uses: ./.github/actions/setup
-      - name: Build
-        run: poetry build
       - name: Semantic Version Release
         uses: python-semantic-release/python-semantic-release@v9
         with:
