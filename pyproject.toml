@@ -39,11 +39,16 @@ pytest = "^8.3.4"
 [tool.semantic_release]
 build_command = "poetry build"
 version_toml = ["pyproject.toml:tool.poetry.version"]
+version_variables = ["autoload/__init__.py:__version__"]
 tag_format = "{version}"
 
 [tool.semantic_release.branches.main]
 match = "(main|master|develop)"
 prerelease = false
+
+[tool.semantic_release.branches.develop]
+match = "develop"
+prerelease = true
 
 [tool.semantic_release.changelog]
 mode = "init"
