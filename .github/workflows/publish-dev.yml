@@ -25,6 +25,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          verbose: true
       - name: Publish | Upload to GitHub Release Assets
         uses: python-semantic-release/publish-action@v9
         with:
