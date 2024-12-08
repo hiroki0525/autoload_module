@@ -19,7 +19,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@v9
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          root_options: "-vv --noop"
+          root_options: "-vv"
       - name: Publish package distributions to PyPI
         id: release
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -31,7 +31,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.release.outputs.tag }}
-          root_options: "-vv --noop"
+          root_options: "-vv"
       - name: Test after Publish
         run: |
           pip install -i https://test.pypi.org/simple/ autoload-module
