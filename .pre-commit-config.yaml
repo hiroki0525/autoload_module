@@ -5,7 +5,7 @@ default_language_version:
   python: python3.9
 repos:
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.23
+    rev: 0.26
     hooks:
       - id: validate-pyproject
   - repo: https://github.com/executablebooks/mdformat
